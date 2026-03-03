@@ -295,42 +295,58 @@ final class AppViewModel: ObservableObject {
             isExporting = false
         }
 
-        for item in videos {
-            await generatePreview(for: item)
-            if item.previewImage != nil {
-                await export(item: item, to: directory)
-            }
+        let configuration = RenderConfiguration(settings: settings)
+        let inputs = videos.map {
+            RenderJobInput(
+                id: $0.id,
+                url: $0.url,
+                fileName: $0.fileName,
+                duration: $0.duration,
+                fileSize: $0.fileSize,
+                resolution: $0.resolution
+            )
         }
-    }
 
-    private func export(item: VideoItem, to directory: URL) async {
-        item.status = .exporting
+        var startIndex = 0
+        while startIndex < inputs.count {
+            let endIndex = min(startIndex + max(settings.renderConcurrency, 1), inputs.count)
+            let batch = Array(inputs[startIndex..<endIndex])
 
-        do {
-            let image: NSImage
-            if let previewImage = item.previewImage {
-                image = previewImage
-            } else {
-                let thumbnails = try await VideoProcessingService.generateThumbnails(
-                    for: item.url,
-                    count: settings.columns * settings.rows,
-                    maxSize: settings.resolvedThumbnailSize(for: item.resolution)
-                )
-                image = ContactSheetRenderer.render(
-                    title: item.fileName,
-                    durationText: formattedDuration(for: item),
-                    resolutionText: formattedResolution(for: item),
-                    fileSizeText: formattedSize(for: item),
-                    thumbnails: thumbnails,
-                    options: renderOptions(for: item)
-                )
+            for input in batch {
+                if let item = videos.first(where: { $0.id == input.id }) {
+                    item.status = .generating
+                }
             }
 
-            let targetURL = directory.appendingPathComponent(outputFileName(for: item))
-            try write(image: image, to: targetURL, format: settings.exportFormat)
-            item.status = .exported(targetURL)
-        } catch {
-            item.status = .failed(error.localizedDescription)
+            let results = await withTaskGroup(of: RenderJobResult.self) { group in
+                for input in batch {
+                    group.addTask {
+                        await Self.processRenderJob(input: input, directory: directory, configuration: configuration)
+                    }
+                }
+
+                var completed: [RenderJobResult] = []
+                for await result in group {
+                    completed.append(result)
+                }
+                return completed
+            }
+
+            for result in results {
+                guard let item = videos.first(where: { $0.id == result.id }) else { continue }
+
+                switch result.outcome {
+                case .success(let image, let duration, let resolution, let targetURL):
+                    item.duration = duration
+                    item.resolution = resolution
+                    item.previewImage = image
+                    item.status = .exported(targetURL)
+                case .failure(let message):
+                    item.status = .failed(message)
+                }
+            }
+
+            startIndex = endIndex
         }
     }
 
@@ -403,6 +419,214 @@ final class AppViewModel: ObservableObject {
         var contentTypes: [UTType] = [.movie, .mpeg4Movie, .quickTimeMovie]
         contentTypes.append(contentsOf: Self.supportedVideoExtensions.compactMap { UTType(filenameExtension: $0) })
         return Array(Set(contentTypes))
+    }
+
+    private static func processRenderJob(
+        input: RenderJobInput,
+        directory: URL,
+        configuration: RenderConfiguration
+    ) async -> RenderJobResult {
+        do {
+            var duration = input.duration
+            var resolution = input.resolution
+
+            if resolution == .zero || duration == 0 {
+                let renderMetadata = try await VideoProcessingService.loadRenderMetadata(for: input.url)
+                duration = renderMetadata.duration
+                resolution = renderMetadata.resolution
+            }
+
+            let thumbnailSize = configuration.resolvedThumbnailSize(for: resolution)
+            let thumbnails = try await VideoProcessingService.generateThumbnails(
+                for: input.url,
+                count: configuration.columns * configuration.rows,
+                maxSize: thumbnailSize
+            )
+
+            let image = ContactSheetRenderer.render(
+                title: input.fileName,
+                durationText: formatDuration(duration),
+                resolutionText: formatResolution(resolution),
+                fileSizeText: formatFileSize(input.fileSize),
+                thumbnails: thumbnails,
+                options: configuration.renderOptions(for: resolution)
+            )
+
+            let targetURL = directory.appendingPathComponent(outputFileName(fileName: input.fileName, exportFormat: configuration.exportFormat))
+            try writeImage(image, to: targetURL, format: configuration.exportFormat)
+            return RenderJobResult(
+                id: input.id,
+                outcome: .success(
+                    image: image,
+                    duration: duration,
+                    resolution: resolution,
+                    targetURL: targetURL
+                )
+            )
+        } catch {
+            return RenderJobResult(id: input.id, outcome: .failure(error.localizedDescription))
+        }
+    }
+
+    private static func outputFileName(fileName: String, exportFormat: ExportFormat) -> String {
+        let stem = URL(fileURLWithPath: fileName).deletingPathExtension().lastPathComponent
+        return "\(stem).\(exportFormat.fileExtension)"
+    }
+
+    private static func writeImage(_ image: NSImage, to url: URL, format: ExportFormat) throws {
+        switch format {
+        case .jpg:
+            guard let data = image.jpegData(compressionFactor: 0.92) else {
+                throw CocoaError(.fileWriteUnknown)
+            }
+            try data.write(to: url)
+        case .png:
+            guard let data = image.pngData() else {
+                throw CocoaError(.fileWriteUnknown)
+            }
+            try data.write(to: url)
+        }
+    }
+
+    private static func formatDuration(_ duration: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .positional
+        formatter.zeroFormattingBehavior = [.pad]
+        return formatter.string(from: duration) ?? "00:00"
+    }
+
+    private static func formatFileSize(_ fileSize: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: fileSize)
+    }
+
+    private static func formatResolution(_ resolution: CGSize) -> String {
+        let width = Int(resolution.width.rounded())
+        let height = Int(resolution.height.rounded())
+        guard width > 0, height > 0 else { return AppStrings.unknownResolution }
+        return "\(width) × \(height) px"
+    }
+}
+
+private struct RenderJobInput: Sendable {
+    let id: UUID
+    let url: URL
+    let fileName: String
+    let duration: TimeInterval
+    let fileSize: Int64
+    let resolution: CGSize
+}
+
+private struct RenderJobResult {
+    enum Outcome {
+        case success(image: NSImage, duration: TimeInterval, resolution: CGSize, targetURL: URL)
+        case failure(String)
+    }
+
+    let id: UUID
+    let outcome: Outcome
+}
+
+private struct RenderConfiguration: Sendable {
+    private static let defaultThumbnailWidth: CGFloat = 320
+    private static let defaultThumbnailHeight: CGFloat = 180
+
+    let columns: Int
+    let rows: Int
+    let spacing: CGFloat
+    let thumbnailWidthText: String
+    let thumbnailHeightText: String
+    let backgroundColorComponents: (Double, Double, Double)
+    let metadataTextColorComponents: (Double, Double, Double)
+    let fileNameFontSize: CGFloat
+    let durationFontSize: CGFloat
+    let fileSizeFontSize: CGFloat
+    let resolutionFontSize: CGFloat
+    let timestampFontSize: CGFloat
+    let exportFormat: ExportFormat
+    let metadataVisibility: ContactSheetMetadataVisibility
+
+    @MainActor
+    init(settings: AppSettings) {
+        columns = settings.columns
+        rows = settings.rows
+        spacing = settings.thumbnailSpacing
+        thumbnailWidthText = settings.thumbnailWidthText
+        thumbnailHeightText = settings.thumbnailHeightText
+        backgroundColorComponents = (settings.backgroundRed, settings.backgroundGreen, settings.backgroundBlue)
+        metadataTextColorComponents = (settings.metadataTextRed, settings.metadataTextGreen, settings.metadataTextBlue)
+        fileNameFontSize = settings.resolvedFileNameFontSize
+        durationFontSize = settings.resolvedDurationFontSize
+        fileSizeFontSize = settings.resolvedFileSizeFontSize
+        resolutionFontSize = settings.resolvedResolutionFontSize
+        timestampFontSize = settings.resolvedTimestampFontSize
+        exportFormat = settings.exportFormat
+        metadataVisibility = ContactSheetMetadataVisibility(
+            showFileName: settings.showFileName,
+            showDuration: settings.showDuration,
+            showFileSize: settings.showFileSize,
+            showResolution: settings.showResolution,
+            showTimestamp: settings.showTimestamp
+        )
+    }
+
+    func renderOptions(for resolution: CGSize) -> ContactSheetRenderOptions {
+        ContactSheetRenderOptions(
+            columns: columns,
+            rows: rows,
+            spacing: spacing,
+            thumbnailSize: resolvedThumbnailSize(for: resolution),
+            backgroundColor: NSColor(
+                calibratedRed: backgroundColorComponents.0,
+                green: backgroundColorComponents.1,
+                blue: backgroundColorComponents.2,
+                alpha: 1
+            ),
+            metadataTextColor: NSColor(
+                calibratedRed: metadataTextColorComponents.0,
+                green: metadataTextColorComponents.1,
+                blue: metadataTextColorComponents.2,
+                alpha: 1
+            ),
+            fileNameFontSize: fileNameFontSize,
+            durationFontSize: durationFontSize,
+            fileSizeFontSize: fileSizeFontSize,
+            resolutionFontSize: resolutionFontSize,
+            timestampFontSize: timestampFontSize,
+            metadataVisibility: metadataVisibility
+        )
+    }
+
+    func resolvedThumbnailSize(for resolution: CGSize) -> CGSize {
+        let width = parsedPositiveCGFloat(from: thumbnailWidthText)
+        let height = parsedPositiveCGFloat(from: thumbnailHeightText)
+        let aspectRatio = resolvedAspectRatio(for: resolution)
+
+        switch (width, height) {
+        case let (.some(width), .some(height)):
+            return CGSize(width: width, height: height)
+        case let (.some(width), nil):
+            return CGSize(width: width, height: width / aspectRatio)
+        case let (nil, .some(height)):
+            return CGSize(width: height * aspectRatio, height: height)
+        case (nil, nil):
+            return CGSize(width: Self.defaultThumbnailWidth, height: Self.defaultThumbnailHeight)
+        }
+    }
+
+    private func parsedPositiveCGFloat(from text: String) -> CGFloat? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let value = Double(trimmed), value > 0 else { return nil }
+        return CGFloat(value)
+    }
+
+    private func resolvedAspectRatio(for resolution: CGSize) -> CGFloat {
+        guard resolution.width > 0, resolution.height > 0 else {
+            return Self.defaultThumbnailWidth / Self.defaultThumbnailHeight
+        }
+        return resolution.width / resolution.height
     }
 }
 

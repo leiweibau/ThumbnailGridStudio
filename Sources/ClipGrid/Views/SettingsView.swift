@@ -17,6 +17,15 @@ struct SettingsView: View {
                 Stepper(AppStrings.rows(settings.rows), value: $settings.rows, in: 1...10)
             }
 
+            HStack {
+                Stepper(
+                    AppStrings.renderConcurrency(settings.renderConcurrency),
+                    value: $settings.renderConcurrency,
+                    in: 1...8
+                )
+                Spacer()
+            }
+
             Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
                 GridRow {
                     Text("\(AppStrings.thumbnailWidth):")
@@ -36,26 +45,29 @@ struct SettingsView: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 10) {
-                Picker(AppStrings.exportFormat, selection: $settings.exportFormat) {
-                    ForEach(ExportFormat.allCases) { format in
-                        Text(format.displayName).tag(format)
+            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
+                GridRow {
+                    Text("\(AppStrings.exportFormat)")
+                    Picker("", selection: $settings.exportFormat) {
+                        ForEach(ExportFormat.allCases) { format in
+                            Text(format.displayName).tag(format)
+                        }
                     }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: 200)
                 }
-                .pickerStyle(.segmented)
 
-                Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
-                    GridRow {
-                        Text("\(AppStrings.background):")
-                        ColorPicker("", selection: backgroundColor, supportsOpacity: false)
-                            .labelsHidden()
-                    }
+                GridRow {
+                    Text("\(AppStrings.background):")
+                    ColorPicker("", selection: backgroundColor, supportsOpacity: false)
+                        .labelsHidden()
+                }
 
-                    GridRow {
-                        Text("\(AppStrings.metadataTextColor):")
-                        ColorPicker("", selection: metadataTextColor, supportsOpacity: false)
-                            .labelsHidden()
-                    }
+                GridRow {
+                    Text("\(AppStrings.metadataTextColor):")
+                    ColorPicker("", selection: metadataTextColor, supportsOpacity: false)
+                        .labelsHidden()
                 }
             }
 

@@ -27,9 +27,11 @@ final class AppSettings: ObservableObject {
     static let defaultFileSizeFontSize: CGFloat = 14
     static let defaultResolutionFontSize: CGFloat = 14
     static let defaultTimestampFontSize: CGFloat = 12
+    static let defaultRenderConcurrency: Int = 2
 
     @Published var columns: Int { didSet { defaults.set(columns, forKey: Keys.columns) } }
     @Published var rows: Int { didSet { defaults.set(rows, forKey: Keys.rows) } }
+    @Published var renderConcurrency: Int { didSet { defaults.set(renderConcurrency, forKey: Keys.renderConcurrency) } }
     @Published var thumbnailSpacing: Double { didSet { defaults.set(thumbnailSpacing, forKey: Keys.thumbnailSpacing) } }
     @Published var thumbnailWidthText: String { didSet { defaults.set(thumbnailWidthText, forKey: Keys.thumbnailWidthText) } }
     @Published var thumbnailHeightText: String { didSet { defaults.set(thumbnailHeightText, forKey: Keys.thumbnailHeightText) } }
@@ -56,6 +58,7 @@ final class AppSettings: ObservableObject {
     private enum Keys {
         static let columns = "settings.columns"
         static let rows = "settings.rows"
+        static let renderConcurrency = "settings.renderConcurrency"
         static let thumbnailSpacing = "settings.thumbnailSpacing"
         static let thumbnailWidthText = "settings.thumbnailWidthText"
         static let thumbnailHeightText = "settings.thumbnailHeightText"
@@ -82,6 +85,7 @@ final class AppSettings: ObservableObject {
         self.defaults = defaults
         self.columns = defaults.object(forKey: Keys.columns) as? Int ?? 4
         self.rows = defaults.object(forKey: Keys.rows) as? Int ?? 4
+        self.renderConcurrency = defaults.object(forKey: Keys.renderConcurrency) as? Int ?? Self.defaultRenderConcurrency
         self.thumbnailSpacing = defaults.object(forKey: Keys.thumbnailSpacing) as? Double ?? 16
         self.thumbnailWidthText = defaults.string(forKey: Keys.thumbnailWidthText) ?? "\(Int(Self.defaultThumbnailWidth))"
         self.thumbnailHeightText = defaults.string(forKey: Keys.thumbnailHeightText) ?? "\(Int(Self.defaultThumbnailHeight))"
@@ -134,6 +138,7 @@ final class AppSettings: ObservableObject {
         [
             "\(columns)",
             "\(rows)",
+            "\(renderConcurrency)",
             "\(Int(thumbnailSpacing))",
             thumbnailWidthText,
             thumbnailHeightText,

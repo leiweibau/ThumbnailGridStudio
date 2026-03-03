@@ -23,6 +23,7 @@
 "settings.title" = "Einstellungen";
 "settings.columns" = "Spalten: %d";
 "settings.rows" = "Zeilen: %d";
+"settings.render_concurrency" = "Gleichzeitige Renderjobs: %d";
 "settings.thumbnail_width" = "Thumbnail-Breite";
 "settings.thumbnail_height" = "Thumbnail-Höhe";
 "settings.spacing" = "Abstand: %d px";

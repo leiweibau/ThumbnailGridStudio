@@ -2,15 +2,15 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-ARCH="$(uname -m)"
-BUILD_DIR="$ROOT_DIR/.build/$ARCH-apple-macosx/release"
+X86_BUILD_DIR="$ROOT_DIR/.build/x86_64-apple-macosx/release"
+ARM_BUILD_DIR="$ROOT_DIR/.build/arm64-apple-macosx/release"
 APP_NAME="ClipGrid"
 APP_DIR="$ROOT_DIR/dist/$APP_NAME.app"
 CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
 SWIFTPM_BUNDLE_NAME="${APP_NAME}_${APP_NAME}.bundle"
-SWIFTPM_BUNDLE_SOURCE="$BUILD_DIR/$SWIFTPM_BUNDLE_NAME"
+SWIFTPM_BUNDLE_SOURCE="$ARM_BUILD_DIR/$SWIFTPM_BUNDLE_NAME"
 SWIFTPM_BUNDLE_APP_DEST="$APP_DIR/$SWIFTPM_BUNDLE_NAME"
 ICON_SOURCE="$ROOT_DIR/icon.png"
 ICON_PREPARED="$ROOT_DIR/Resources/AppIconSource.png"
@@ -20,7 +20,8 @@ ICON_OUTPUT="$ROOT_DIR/Resources/AppIcon.icns"
 mkdir -p /tmp/swiftpm-module /tmp/clang-module
 
 cd "$ROOT_DIR"
-env SWIFTPM_MODULECACHE_OVERRIDE=/tmp/swiftpm-module CLANG_MODULE_CACHE_PATH=/tmp/clang-module swift build -c release
+env SWIFTPM_MODULECACHE_OVERRIDE=/tmp/swiftpm-module CLANG_MODULE_CACHE_PATH=/tmp/clang-module swift build -c release --arch x86_64
+env SWIFTPM_MODULECACHE_OVERRIDE=/tmp/swiftpm-module CLANG_MODULE_CACHE_PATH=/tmp/clang-module swift build -c release --arch arm64
 
 if [ -f "$ICON_SOURCE" ]; then
   swift "$ROOT_DIR/Scripts/prepare-icon.swift" "$ICON_SOURCE" "$ICON_PREPARED"
@@ -46,7 +47,10 @@ fi
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
-cp "$BUILD_DIR/$APP_NAME" "$MACOS_DIR/$APP_NAME"
+lipo -create \
+  "$X86_BUILD_DIR/$APP_NAME" \
+  "$ARM_BUILD_DIR/$APP_NAME" \
+  -output "$MACOS_DIR/$APP_NAME"
 cp "$ROOT_DIR/Resources/Info.plist" "$CONTENTS_DIR/Info.plist"
 if [ -f "$ICON_OUTPUT" ]; then
   cp "$ICON_OUTPUT" "$RESOURCES_DIR/AppIcon.icns"

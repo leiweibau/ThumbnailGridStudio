@@ -24,6 +24,7 @@ enum AppStrings {
     static var settingsTitle: String { text("settings.title") }
     static func columns(_ value: Int) -> String { formatted("settings.columns", value) }
     static func rows(_ value: Int) -> String { formatted("settings.rows", value) }
+    static func renderConcurrency(_ value: Int) -> String { formatted("settings.render_concurrency", value) }
     static var thumbnailWidth: String { text("settings.thumbnail_width") }
     static var thumbnailHeight: String { text("settings.thumbnail_height") }
     static func spacing(_ value: Int) -> String { formatted("settings.spacing", value) }
