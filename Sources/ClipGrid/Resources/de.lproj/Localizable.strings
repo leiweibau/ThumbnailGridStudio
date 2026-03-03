@@ -1,0 +1,48 @@
+"export.jpeg" = "JPEG";
+"export.png" = "PNG";
+
+"status.ready" = "Bereit";
+"status.generating" = "Erzeuge Vorschau";
+"status.preview_ready" = "Vorschau fertig";
+"status.exporting" = "Exportiere";
+"status.exported" = "Exportiert";
+
+"error.title" = "Fehler";
+"error.unreadable_video" = "Video konnte nicht gelesen werden.";
+"error.no_thumbnails" = "Es konnten keine Thumbnails erzeugt werden.";
+"error.file" = "Fehler bei %@: %@";
+
+"common.ok" = "OK";
+"common.close" = "Schließen";
+
+"metadata.unknown_resolution" = "Unbekannte Auflösung";
+
+"preview.placeholder_title" = "Vorschau";
+"preview.generating" = "Erzeuge Vorschau";
+
+"settings.title" = "Einstellungen";
+"settings.columns" = "Spalten: %d";
+"settings.rows" = "Zeilen: %d";
+"settings.thumbnail_width" = "Thumbnail-Breite: %d px";
+"settings.thumbnail_height" = "Thumbnail-Höhe: %d px";
+"settings.spacing" = "Abstand: %d px";
+"settings.export_format" = "Exportformat";
+"settings.background" = "Hintergrund";
+"settings.metadata" = "Metadaten";
+"settings.show_file_name" = "Dateiname anzeigen";
+"settings.show_duration" = "Spielzeit anzeigen";
+"settings.show_file_size" = "Dateigröße anzeigen";
+"settings.show_resolution" = "Auflösung anzeigen";
+
+"sidebar.videos" = "Videos";
+"sidebar.importing" = "Importiere Videos";
+
+"help.add_videos" = "Videos hinzufügen";
+"help.remove_selection" = "Auswahl löschen";
+"help.settings" = "Einstellungen";
+"help.clear_all" = "Gesamte Liste löschen";
+"help.start" = "Rendern und exportieren";
+
+"drop.videos_here" = "Videos hier ablegen";
+
+"action.start" = "Starten";

@@ -1,0 +1,9 @@
+.DS_Store
+.build/
+dist/
+
+Resources/AppIcon.icns
+Resources/AppIconSource.png
+
+*.swp
+*.tmp
