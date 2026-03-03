@@ -1,13 +1,15 @@
 # ClipGrid
 
-Native macOS-App auf Basis von SwiftUI, die mehrere Videos einliest und pro Video einen Kontaktbogen als `JPG` oder `PNG` exportiert.
+Native macOS-App auf Basis von SwiftUI, die mehrere Videos einliest und pro Video eine Videovorschau als `JPG` oder `PNG` exportiert.
+
+![ClipGrid Screenshot](screen.png)
 
 ## Funktionen
 
 - Mehrere Videos gleichzeitig laden
 - Drag-and-Drop und Dateiauswahl fuer Videoimporte
-- Kontaktboegen mit konfigurierbarem Grid und Zeitstempeln pro Thumbnail
-- Metadaten im Header des Kontaktbogens optional ein- und ausblendbar
+- Videovorschauen mit konfigurierbarem Grid und Zeitstempeln pro Thumbnail
+- Metadaten im Header der Videovorschau optional ein- und ausblendbar
 - Konfigurierbares Grid mit Spalten, Zeilen, Thumbnail-Größe und Abstand
 - Einstellbare Hintergrundfarbe
 - Persistente Einstellungen ueber App-Neustarts hinweg
