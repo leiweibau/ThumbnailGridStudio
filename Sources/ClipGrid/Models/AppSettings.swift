@@ -22,6 +22,7 @@ enum ExportFormat: String, CaseIterable, Identifiable {
 final class AppSettings: ObservableObject {
     static let defaultThumbnailWidth: CGFloat = 320
     static let defaultThumbnailHeight: CGFloat = 180
+    static let defaultThumbnailSpacing: Double = 16
     static let defaultFileNameFontSize: CGFloat = 26
     static let defaultDurationFontSize: CGFloat = 14
     static let defaultFileSizeFontSize: CGFloat = 14
@@ -32,7 +33,7 @@ final class AppSettings: ObservableObject {
     @Published var columns: Int { didSet { defaults.set(columns, forKey: Keys.columns) } }
     @Published var rows: Int { didSet { defaults.set(rows, forKey: Keys.rows) } }
     @Published var renderConcurrency: Int { didSet { defaults.set(renderConcurrency, forKey: Keys.renderConcurrency) } }
-    @Published var thumbnailSpacing: Double { didSet { defaults.set(thumbnailSpacing, forKey: Keys.thumbnailSpacing) } }
+    @Published var thumbnailSpacingText: String { didSet { defaults.set(thumbnailSpacingText, forKey: Keys.thumbnailSpacingText) } }
     @Published var thumbnailWidthText: String { didSet { defaults.set(thumbnailWidthText, forKey: Keys.thumbnailWidthText) } }
     @Published var thumbnailHeightText: String { didSet { defaults.set(thumbnailHeightText, forKey: Keys.thumbnailHeightText) } }
     @Published var backgroundRed: Double { didSet { defaults.set(backgroundRed, forKey: Keys.backgroundRed) } }
@@ -59,7 +60,7 @@ final class AppSettings: ObservableObject {
         static let columns = "settings.columns"
         static let rows = "settings.rows"
         static let renderConcurrency = "settings.renderConcurrency"
-        static let thumbnailSpacing = "settings.thumbnailSpacing"
+        static let thumbnailSpacingText = "settings.thumbnailSpacingText"
         static let thumbnailWidthText = "settings.thumbnailWidthText"
         static let thumbnailHeightText = "settings.thumbnailHeightText"
         static let backgroundRed = "settings.backgroundRed"
@@ -86,7 +87,7 @@ final class AppSettings: ObservableObject {
         self.columns = defaults.object(forKey: Keys.columns) as? Int ?? 4
         self.rows = defaults.object(forKey: Keys.rows) as? Int ?? 4
         self.renderConcurrency = defaults.object(forKey: Keys.renderConcurrency) as? Int ?? Self.defaultRenderConcurrency
-        self.thumbnailSpacing = defaults.object(forKey: Keys.thumbnailSpacing) as? Double ?? 16
+        self.thumbnailSpacingText = defaults.string(forKey: Keys.thumbnailSpacingText) ?? "\(Int(Self.defaultThumbnailSpacing))"
         self.thumbnailWidthText = defaults.string(forKey: Keys.thumbnailWidthText) ?? "\(Int(Self.defaultThumbnailWidth))"
         self.thumbnailHeightText = defaults.string(forKey: Keys.thumbnailHeightText) ?? "\(Int(Self.defaultThumbnailHeight))"
         self.backgroundRed = defaults.object(forKey: Keys.backgroundRed) as? Double ?? 0.12
@@ -139,7 +140,7 @@ final class AppSettings: ObservableObject {
             "\(columns)",
             "\(rows)",
             "\(renderConcurrency)",
-            "\(Int(thumbnailSpacing))",
+            thumbnailSpacingText,
             thumbnailWidthText,
             thumbnailHeightText,
             "\(Int(backgroundRed * 1000))",
@@ -193,6 +194,10 @@ final class AppSettings: ObservableObject {
         }
     }
 
+    var resolvedThumbnailSpacing: CGFloat {
+        CGFloat(parsedPositiveDouble(from: thumbnailSpacingText) ?? Self.defaultThumbnailSpacing)
+    }
+
     var resolvedFileNameFontSize: CGFloat {
         resolvedFontSize(from: fileNameFontSizeText, defaultValue: Self.defaultFileNameFontSize)
     }
@@ -221,6 +226,12 @@ final class AppSettings: ObservableObject {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, let value = Double(trimmed), value > 0 else { return nil }
         return CGFloat(value)
+    }
+
+    private func parsedPositiveDouble(from text: String) -> Double? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let value = Double(trimmed), value > 0 else { return nil }
+        return value
     }
 
     private func resolvedAspectRatio(for resolution: CGSize) -> CGFloat {

@@ -22,13 +22,16 @@ enum AppStrings {
     static var previewTitle: String { text("preview.placeholder_title") }
 
     static var settingsTitle: String { text("settings.title") }
+    static var thumbnails: String { text("settings.thumbnails") }
     static func columns(_ value: Int) -> String { formatted("settings.columns", value) }
     static func rows(_ value: Int) -> String { formatted("settings.rows", value) }
     static func renderConcurrency(_ value: Int) -> String { formatted("settings.render_concurrency", value) }
     static var thumbnailWidth: String { text("settings.thumbnail_width") }
     static var thumbnailHeight: String { text("settings.thumbnail_height") }
+    static var spacingLabel: String { text("settings.spacing_label") }
     static func spacing(_ value: Int) -> String { formatted("settings.spacing", value) }
     static var exportFormat: String { text("settings.export_format") }
+    static var colors: String { text("settings.colors") }
     static var background: String { text("settings.background") }
     static var metadataTextColor: String { text("settings.metadata_text_color") }
     static var metadata: String { text("settings.metadata") }

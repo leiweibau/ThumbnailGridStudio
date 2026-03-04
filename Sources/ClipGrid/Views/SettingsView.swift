@@ -6,48 +6,32 @@ struct SettingsView: View {
     let metadataTextColor: Binding<Color>
     @Environment(\.dismiss) private var dismiss
 
+    private let settingsFieldWidth: CGFloat = 64
+    private let metadataFieldWidth: CGFloat = 64
+
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text(AppStrings.settingsTitle)
                 .font(.title2)
                 .fontWeight(.semibold)
 
-            HStack {
-                Stepper(AppStrings.columns(settings.columns), value: $settings.columns, in: 1...10)
-                Stepper(AppStrings.rows(settings.rows), value: $settings.rows, in: 1...10)
-            }
+            settingsSection(AppStrings.thumbnails) {
+                HStack(alignment: .top, spacing: 44) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        StepperRow(title: AppStrings.columns(settings.columns), value: $settings.columns, range: 1...10)
+                        LabeledFieldRow(title: "\(AppStrings.thumbnailWidth):", placeholder: widthPlaceholder, text: $settings.thumbnailWidthText, fieldWidth: settingsFieldWidth)
+                        LabeledFieldRow(title: "\(AppStrings.thumbnailHeight):", placeholder: heightPlaceholder, text: $settings.thumbnailHeightText, fieldWidth: settingsFieldWidth)
+                    }
 
-            HStack {
-                Stepper(
-                    AppStrings.renderConcurrency(settings.renderConcurrency),
-                    value: $settings.renderConcurrency,
-                    in: 1...8
-                )
-                Spacer()
-            }
-
-            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
-                GridRow {
-                    Text("\(AppStrings.thumbnailWidth):")
-                    TextField(widthPlaceholder, text: $settings.thumbnailWidthText)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 88)
+                    VStack(alignment: .leading, spacing: 14) {
+                        StepperRow(title: AppStrings.rows(settings.rows), value: $settings.rows, range: 1...10)
+                        LabeledFieldRow(title: "\(AppStrings.spacingLabel):", placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultThumbnailSpacing)), text: $settings.thumbnailSpacingText, fieldWidth: settingsFieldWidth)
+                    }
                 }
 
-                GridRow {
-                    Text("\(AppStrings.thumbnailHeight):")
-                    TextField(heightPlaceholder, text: $settings.thumbnailHeightText)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 88)
-                    Text(AppStrings.spacing(Int(settings.thumbnailSpacing)))
-                    Slider(value: $settings.thumbnailSpacing, in: 0...40, step: 1)
-                        .frame(width: 150)
-                }
-            }
-
-            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
-                GridRow {
-                    Text("\(AppStrings.exportFormat)")
+                HStack(alignment: .center, spacing: 12) {
+                    Text(AppStrings.exportFormat)
+                        .frame(width: max(140, labelColumnWidth), alignment: .leading)
                     Picker("", selection: $settings.exportFormat) {
                         ForEach(ExportFormat.allCases) { format in
                             Text(format.displayName).tag(format)
@@ -57,61 +41,63 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                     .frame(width: 200)
                 }
+            }
 
-                GridRow {
-                    Text("\(AppStrings.background):")
-                    ColorPicker("", selection: backgroundColor, supportsOpacity: false)
-                        .labelsHidden()
-                }
-
-                GridRow {
-                    Text("\(AppStrings.metadataTextColor):")
-                    ColorPicker("", selection: metadataTextColor, supportsOpacity: false)
-                        .labelsHidden()
+            settingsSection(AppStrings.colors) {
+                HStack(alignment: .top, spacing: 44) {
+                    colorRow(title: "\(AppStrings.background):", selection: backgroundColor)
+                    colorRow(title: "\(AppStrings.metadataTextColor):", selection: metadataTextColor)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text(AppStrings.metadata)
-                    .font(.headline)
-
-                Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
-                    MetadataGridRow(
-                        title: AppStrings.showFileName,
-                        isOn: $settings.showFileName,
-                        fontSizeText: $settings.fileNameFontSizeText,
-                        placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultFileNameFontSize))
-                    )
-                    MetadataGridRow(
-                        title: AppStrings.showDuration,
-                        isOn: $settings.showDuration,
-                        fontSizeText: $settings.durationFontSizeText,
-                        placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultDurationFontSize))
-                    )
-                    MetadataGridRow(
-                        title: AppStrings.showFileSize,
-                        isOn: $settings.showFileSize,
-                        fontSizeText: $settings.fileSizeFontSizeText,
-                        placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultFileSizeFontSize))
-                    )
-                    MetadataGridRow(
-                        title: AppStrings.showResolution,
-                        isOn: $settings.showResolution,
-                        fontSizeText: $settings.resolutionFontSizeText,
-                        placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultResolutionFontSize))
-                    )
-
-                    GridRow {
-                        Toggle("", isOn: $settings.showTimestamp)
-                            .labelsHidden()
-                        Text(AppStrings.showTimestamp)
-                        TextField(
-                            AppStrings.pixelPlaceholder(Int(AppSettings.defaultTimestampFontSize)),
-                            text: $settings.timestampFontSizeText
+            settingsSection(AppStrings.metadata) {
+                HStack(alignment: .top, spacing: 44) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        MetadataGridRow(
+                            title: AppStrings.showFileName,
+                            isOn: $settings.showFileName,
+                            fontSizeText: $settings.fileNameFontSizeText,
+                            placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultFileNameFontSize)),
+                            fieldWidth: metadataFieldWidth
                         )
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 88)
+                        MetadataGridRow(
+                            title: AppStrings.showDuration,
+                            isOn: $settings.showDuration,
+                            fontSizeText: $settings.durationFontSizeText,
+                            placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultDurationFontSize)),
+                            fieldWidth: metadataFieldWidth
+                        )
+                        MetadataGridRow(
+                            title: AppStrings.showFileSize,
+                            isOn: $settings.showFileSize,
+                            fontSizeText: $settings.fileSizeFontSizeText,
+                            placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultFileSizeFontSize)),
+                            fieldWidth: metadataFieldWidth
+                        )
                     }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        MetadataGridRow(
+                            title: AppStrings.showResolution,
+                            isOn: $settings.showResolution,
+                            fontSizeText: $settings.resolutionFontSizeText,
+                            placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultResolutionFontSize)),
+                            fieldWidth: metadataFieldWidth
+                        )
+                        MetadataGridRow(
+                            title: AppStrings.showTimestamp,
+                            isOn: $settings.showTimestamp,
+                            fontSizeText: $settings.timestampFontSizeText,
+                            placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultTimestampFontSize)),
+                            fieldWidth: metadataFieldWidth
+                        )
+                    }
+                }
+
+                HStack(spacing: 10) {
+                    Text(AppStrings.renderConcurrency(settings.renderConcurrency))
+                    Stepper("", value: $settings.renderConcurrency, in: 1...8)
+                        .labelsHidden()
                 }
             }
 
@@ -125,6 +111,17 @@ struct SettingsView: View {
         }
         .padding(24)
         .frame(width: 620)
+    }
+
+    private var labelColumnWidth: CGFloat {
+        max(
+            "\(AppStrings.thumbnailWidth):".size(using: .systemFont(ofSize: NSFont.systemFontSize)),
+            "\(AppStrings.thumbnailHeight):".size(using: .systemFont(ofSize: NSFont.systemFontSize)),
+            "\(AppStrings.spacingLabel):".size(using: .systemFont(ofSize: NSFont.systemFontSize)),
+            "\(AppStrings.background):".size(using: .systemFont(ofSize: NSFont.systemFontSize)),
+            "\(AppStrings.metadataTextColor):".size(using: .systemFont(ofSize: NSFont.systemFontSize)),
+            AppStrings.exportFormat.size(using: .systemFont(ofSize: NSFont.systemFontSize))
+        ) + 8
     }
 
     private var widthPlaceholder: String {
@@ -142,6 +139,24 @@ struct SettingsView: View {
         }
         return AppStrings.auto
     }
+
+    @ViewBuilder
+    private func settingsSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.headline)
+            content()
+        }
+    }
+
+    private func colorRow(title: String, selection: Binding<Color>) -> some View {
+        HStack(spacing: 12) {
+            Text(title)
+                .frame(width: max(150, labelColumnWidth), alignment: .leading)
+            ColorPicker("", selection: selection, supportsOpacity: false)
+                .labelsHidden()
+        }
+    }
 }
 
 private struct MetadataGridRow: View {
@@ -149,15 +164,55 @@ private struct MetadataGridRow: View {
     @Binding var isOn: Bool
     @Binding var fontSizeText: String
     let placeholder: String
+    let fieldWidth: CGFloat
 
     var body: some View {
-        GridRow {
+        HStack(spacing: 10) {
             Toggle("", isOn: $isOn)
                 .labelsHidden()
             Text(title)
+                .frame(minWidth: 170, alignment: .leading)
             TextField(placeholder, text: $fontSizeText)
                 .textFieldStyle(.roundedBorder)
-                .frame(width: 88)
+                .frame(width: fieldWidth)
         }
+    }
+}
+
+private struct LabeledFieldRow: View {
+    let title: String
+    let placeholder: String
+    @Binding var text: String
+    let fieldWidth: CGFloat
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(title)
+                .frame(width: 150, alignment: .leading)
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: fieldWidth)
+        }
+    }
+}
+
+private struct StepperRow: View {
+    let title: String
+    @Binding var value: Int
+    let range: ClosedRange<Int>
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .fixedSize()
+            Stepper("", value: $value, in: range)
+                .labelsHidden()
+        }
+    }
+}
+
+private extension String {
+    func size(using font: NSFont) -> CGFloat {
+        (self as NSString).size(withAttributes: [.font: font]).width
     }
 }

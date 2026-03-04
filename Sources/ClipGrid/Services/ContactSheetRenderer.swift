@@ -25,6 +25,19 @@ struct ContactSheetRenderOptions {
 }
 
 enum ContactSheetRenderer {
+    private static let placeholderBackgroundDarkImage: NSImage? = {
+        guard let url = Bundle.module.url(forResource: "prev_background_dark", withExtension: "png") else {
+            return nil
+        }
+        return NSImage(contentsOf: url)
+    }()
+    private static let placeholderBackgroundLightImage: NSImage? = {
+        guard let url = Bundle.module.url(forResource: "prev_background_light", withExtension: "png") else {
+            return nil
+        }
+        return NSImage(contentsOf: url)
+    }()
+
     static func render(
         title: String,
         durationText: String,
@@ -144,6 +157,7 @@ enum ContactSheetRenderer {
         return image
     }
 
+    @MainActor
     static func renderPlaceholder(
         title: String,
         durationText: String,
@@ -278,28 +292,49 @@ enum ContactSheetRenderer {
         return luminance > 0.62 ? .black : .white
     }
 
-    private static func placeholderThumbnail(index: Int, size: CGSize) -> NSImage {
+    @MainActor
+    private static func placeholderThumbnail(index _: Int, size: CGSize) -> NSImage {
         let image = NSImage(size: size)
         image.lockFocus()
 
-        let hue = CGFloat((index % 8)) / 8.0
-        let topColor = NSColor(calibratedHue: hue, saturation: 0.35, brightness: 0.92, alpha: 1)
-        let bottomColor = NSColor(calibratedHue: hue, saturation: 0.45, brightness: 0.62, alpha: 1)
-        let gradient = NSGradient(starting: topColor, ending: bottomColor)
-        gradient?.draw(in: NSRect(origin: .zero, size: size), angle: -90)
+        let bounds = NSRect(origin: .zero, size: size)
+        if let placeholderBackgroundImage = placeholderBackgroundImageForCurrentAppearance() {
+            placeholderBackgroundImage.draw(
+                in: bounds,
+                from: NSRect(origin: .zero, size: placeholderBackgroundImage.size),
+                operation: .sourceOver,
+                fraction: 1
+            )
+        } else {
+            let fallbackGradient = NSGradient(
+                colors: [
+                    NSColor(calibratedWhite: 0.24, alpha: 1),
+                    NSColor(calibratedWhite: 0.12, alpha: 1)
+                ]
+            )
+            fallbackGradient?.draw(in: bounds, angle: -90)
+        }
 
-        NSColor.white.withAlphaComponent(0.22).setStroke()
-        let path = NSBezierPath()
-        path.lineWidth = 6
-        path.move(to: CGPoint(x: size.width * 0.12, y: size.height * 0.2))
-        path.curve(
-            to: CGPoint(x: size.width * 0.88, y: size.height * 0.76),
-            controlPoint1: CGPoint(x: size.width * 0.28, y: size.height * 0.62),
-            controlPoint2: CGPoint(x: size.width * 0.64, y: size.height * 0.34)
-        )
-        path.stroke()
+        let borderPath = NSBezierPath(roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5), xRadius: 16, yRadius: 16)
+        borderPath.lineWidth = 1
+        NSColor.white.withAlphaComponent(0.14).setStroke()
+        borderPath.stroke()
 
         image.unlockFocus()
         return image
+    }
+
+    @MainActor
+    private static func placeholderBackgroundImageForCurrentAppearance() -> NSImage? {
+        if let bestMatch = NSApp?.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) {
+            switch bestMatch {
+            case .darkAqua:
+                return placeholderBackgroundDarkImage
+            default:
+                return placeholderBackgroundLightImage
+            }
+        }
+
+        return placeholderBackgroundLightImage
     }
 }

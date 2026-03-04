@@ -8,15 +8,17 @@ ClipGrid is a native macOS app built with SwiftUI that imports multiple videos a
 
 ## Features
 
-- Import multiple videos at once
-- Drag and drop plus file picker support for video import
-- Export video preview sheets with a configurable grid and timestamps on every thumbnail
-- Toggle metadata in the preview header on or off
-- Configure columns, rows, thumbnail size, and spacing
-- Customize the background color
-- Persist settings across app restarts
+The most important capabilities in the current version are:
+
+- Multi-file import via drag and drop or file picker
+- Contact sheet style video preview export with timestamps on every thumbnail
+- Configurable grid, thumbnail size, spacing, colors, metadata visibility, and font sizes
+- Built-in `ffmpeg` and `ffprobe` for broader format support such as `mkv`, `avi`, and `webm`
+- Universal macOS app bundle for Apple Silicon and Intel
+- Persistent settings across app restarts
 - German and English localization
-- Export all loaded videos in one run
+- One-click render and export for all loaded videos
+- Light and dark placeholder preview artwork that follows the current macOS appearance
 
 ## Requirements
 
@@ -35,14 +37,16 @@ You can also open `Package.swift` directly in Xcode.
 ## Project Structure
 
 - `Sources/ClipGrid`: SwiftUI app, view models, renderer, and services
-- `Sources/ClipGrid/Resources`: localized `Localizable.strings`
+- `Sources/ClipGrid/Resources`: localized `Localizable.strings` and preview placeholder artwork
 - `Resources/Info.plist`: bundle metadata for the packaged app
+- `Scripts/build-ffmpeg.sh`: builds bundled `ffmpeg` and `ffprobe` binaries from the official FFmpeg source
 - `Scripts/package-app.sh`: builds the native `.app` bundle
 - `icon.png`: source image for the app icon
 
 ## Build the App Bundle
 
 ```bash
+bash Scripts/build-ffmpeg.sh
 bash Scripts/package-app.sh
 ```
 
@@ -65,4 +69,5 @@ Alternatively:
 ## Notes
 
 - The app icon is generated from `icon.png` during packaging.
+- `ffmpeg` and `ffprobe` are bundled inside the app, so no separate installation is required.
 - Exported images use the same base filename as the video, with the selected image extension.

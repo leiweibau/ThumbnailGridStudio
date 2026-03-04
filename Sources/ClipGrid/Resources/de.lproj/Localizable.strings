@@ -21,13 +21,16 @@
 "preview.generating" = "Erzeuge Vorschau";
 
 "settings.title" = "Einstellungen";
+"settings.thumbnails" = "Thumbnails";
 "settings.columns" = "Spalten: %d";
 "settings.rows" = "Zeilen: %d";
 "settings.render_concurrency" = "Gleichzeitige Renderjobs: %d";
 "settings.thumbnail_width" = "Thumbnail-Breite";
 "settings.thumbnail_height" = "Thumbnail-Höhe";
+"settings.spacing_label" = "Abstand";
 "settings.spacing" = "Abstand: %d px";
 "settings.export_format" = "Exportformat";
+"settings.colors" = "Farben";
 "settings.background" = "Hintergrund";
 "settings.metadata_text_color" = "Metadaten-Textfarbe";
 "settings.metadata" = "Metadaten";

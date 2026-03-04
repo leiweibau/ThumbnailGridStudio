@@ -9,13 +9,30 @@ APP_DIR="$ROOT_DIR/dist/$APP_NAME.app"
 CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
+TOOLS_DIR="$RESOURCES_DIR/Tools"
 SWIFTPM_BUNDLE_NAME="${APP_NAME}_${APP_NAME}.bundle"
 SWIFTPM_BUNDLE_SOURCE="$ARM_BUILD_DIR/$SWIFTPM_BUNDLE_NAME"
 SWIFTPM_BUNDLE_APP_DEST="$APP_DIR/$SWIFTPM_BUNDLE_NAME"
+FFMPEG_X86_DIR="$ROOT_DIR/.cache/ffmpeg-install/x86_64/bin"
+FFMPEG_ARM_DIR="$ROOT_DIR/.cache/ffmpeg-install/arm64/bin"
 ICON_SOURCE="$ROOT_DIR/icon.png"
 ICON_PREPARED="$ROOT_DIR/Resources/AppIconSource.png"
 ICONSET_DIR="/tmp/${APP_NAME}.iconset"
 ICON_OUTPUT="$ROOT_DIR/Resources/AppIcon.icns"
+
+require_bundled_tool() {
+  local path="$1"
+  if [ ! -f "$path" ]; then
+    echo "Missing bundled FFmpeg tool: $path" >&2
+    echo "Run Scripts/build-ffmpeg.sh first." >&2
+    exit 1
+  fi
+}
+
+require_bundled_tool "$FFMPEG_X86_DIR/ffmpeg"
+require_bundled_tool "$FFMPEG_X86_DIR/ffprobe"
+require_bundled_tool "$FFMPEG_ARM_DIR/ffmpeg"
+require_bundled_tool "$FFMPEG_ARM_DIR/ffprobe"
 
 mkdir -p /tmp/swiftpm-module /tmp/clang-module
 
@@ -47,6 +64,8 @@ fi
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR"
 mkdir -p "$RESOURCES_DIR"
+mkdir -p "$TOOLS_DIR/x86_64"
+mkdir -p "$TOOLS_DIR/arm64"
 lipo -create \
   "$X86_BUILD_DIR/$APP_NAME" \
   "$ARM_BUILD_DIR/$APP_NAME" \
@@ -58,5 +77,15 @@ fi
 if [ -d "$SWIFTPM_BUNDLE_SOURCE" ]; then
   cp -R "$SWIFTPM_BUNDLE_SOURCE" "$SWIFTPM_BUNDLE_APP_DEST"
 fi
+for tool in ffmpeg ffprobe; do
+  if [ -f "$FFMPEG_X86_DIR/$tool" ]; then
+    cp "$FFMPEG_X86_DIR/$tool" "$TOOLS_DIR/x86_64/$tool"
+    chmod +x "$TOOLS_DIR/x86_64/$tool"
+  fi
+  if [ -f "$FFMPEG_ARM_DIR/$tool" ]; then
+    cp "$FFMPEG_ARM_DIR/$tool" "$TOOLS_DIR/arm64/$tool"
+    chmod +x "$TOOLS_DIR/arm64/$tool"
+  fi
+done
 
 echo "Created $APP_DIR"

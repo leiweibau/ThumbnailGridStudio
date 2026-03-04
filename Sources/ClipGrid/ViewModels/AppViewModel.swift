@@ -21,6 +21,8 @@ final class AppViewModel: ObservableObject {
     @Published var lastError: String?
 
     let settings = AppSettings()
+    private var cachedPlaceholderPreviewKey: String?
+    private var cachedPlaceholderPreviewImage: NSImage?
 
     private let fileSizeFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
@@ -194,6 +196,9 @@ final class AppViewModel: ObservableObject {
     }
 
     func invalidatePreviews() {
+        cachedPlaceholderPreviewKey = nil
+        cachedPlaceholderPreviewImage = nil
+
         for item in videos {
             item.previewImage = nil
             if case .exporting = item.status {
@@ -246,13 +251,21 @@ final class AppViewModel: ObservableObject {
             return image
         }
 
-        return ContactSheetRenderer.renderPlaceholder(
+        let cacheKey = placeholderPreviewCacheKey(for: item)
+        if cacheKey == cachedPlaceholderPreviewKey, let cachedPlaceholderPreviewImage {
+            return cachedPlaceholderPreviewImage
+        }
+
+        let image = ContactSheetRenderer.renderPlaceholder(
             title: item?.fileName ?? AppStrings.previewTitle,
             durationText: item.map(formattedDuration(for:)) ?? "00:00",
             resolutionText: item.map(formattedResolution(for:)) ?? "0 × 0 px",
             fileSizeText: item.map(formattedSize(for:)) ?? "0 KB",
             options: renderOptions(for: item)
         )
+        cachedPlaceholderPreviewKey = cacheKey
+        cachedPlaceholderPreviewImage = image
+        return image
     }
 
     private func generatePreview(for item: VideoItem) async {
@@ -350,11 +363,32 @@ final class AppViewModel: ObservableObject {
         }
     }
 
+    private func placeholderPreviewCacheKey(for item: VideoItem?) -> String {
+        let itemKey = item.map {
+            [
+                $0.id.uuidString,
+                $0.fileName,
+                formattedDuration(for: $0),
+                formattedResolution(for: $0),
+                formattedSize(for: $0)
+            ].joined(separator: "|")
+        } ?? "preview"
+
+        return "\(itemKey)#\(settings.renderKey)#\(appearanceCacheKey)"
+    }
+
+    private var appearanceCacheKey: String {
+        guard let bestMatch = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) else {
+            return "light"
+        }
+        return bestMatch == .darkAqua ? "dark" : "light"
+    }
+
     private func renderOptions(for item: VideoItem?) -> ContactSheetRenderOptions {
         ContactSheetRenderOptions(
             columns: settings.columns,
             rows: settings.rows,
-            spacing: settings.thumbnailSpacing,
+            spacing: settings.resolvedThumbnailSpacing,
             thumbnailSize: settings.resolvedThumbnailSize(for: item?.resolution ?? .zero),
             backgroundColor: settings.backgroundNSColor,
             metadataTextColor: settings.metadataTextNSColor,
@@ -552,7 +586,7 @@ private struct RenderConfiguration: Sendable {
     init(settings: AppSettings) {
         columns = settings.columns
         rows = settings.rows
-        spacing = settings.thumbnailSpacing
+        spacing = settings.resolvedThumbnailSpacing
         thumbnailWidthText = settings.thumbnailWidthText
         thumbnailHeightText = settings.thumbnailHeightText
         backgroundColorComponents = (settings.backgroundRed, settings.backgroundGreen, settings.backgroundBlue)

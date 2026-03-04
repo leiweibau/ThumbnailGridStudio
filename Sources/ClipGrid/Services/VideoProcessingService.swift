@@ -1,5 +1,6 @@
 import AVFoundation
 import AppKit
+import Darwin
 import Foundation
 
 struct VideoMetadata {
@@ -32,6 +33,7 @@ enum VideoProcessingError: LocalizedError {
 
 enum VideoProcessingService {
     private static let ffmpegPreferredExtensions: Set<String> = ["mkv", "avi", "webm"]
+    private static let bundledToolFolderName = "Tools"
     private static let toolSearchPaths = [
         "/usr/local/bin",
         "/opt/homebrew/bin",
@@ -233,6 +235,10 @@ enum VideoProcessingService {
     private static func resolvedToolURL(named toolName: String) throws -> URL {
         let fileManager = FileManager.default
 
+        if let bundledToolURL = bundledToolURL(named: toolName), fileManager.isExecutableFile(atPath: bundledToolURL.path) {
+            return bundledToolURL
+        }
+
         for basePath in toolSearchPaths {
             let candidate = URL(fileURLWithPath: basePath).appendingPathComponent(toolName)
             if fileManager.isExecutableFile(atPath: candidate.path) {
@@ -247,6 +253,27 @@ enum VideoProcessingService {
                 NSLocalizedDescriptionKey: "\(toolName) not found"
             ]
         )
+    }
+
+    private static func bundledToolURL(named toolName: String) -> URL? {
+        guard let resourceURL = Bundle.main.resourceURL else {
+            return nil
+        }
+
+        return resourceURL
+            .appendingPathComponent(bundledToolFolderName, isDirectory: true)
+            .appendingPathComponent(currentArchitectureFolderName, isDirectory: true)
+            .appendingPathComponent(toolName, isDirectory: false)
+    }
+
+    private static var currentArchitectureFolderName: String {
+        #if arch(arm64)
+        return "arm64"
+        #elseif arch(x86_64)
+        return "x86_64"
+        #else
+        return ProcessInfo.processInfo.machineArchitectureName
+        #endif
     }
 }
 
@@ -267,5 +294,17 @@ private struct FFprobeResponse: Decodable {
 private extension CGSize {
     var absoluteSize: CGSize {
         CGSize(width: abs(width), height: abs(height))
+    }
+}
+
+private extension ProcessInfo {
+    var machineArchitectureName: String {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let machine = systemInfo.machine
+        return withUnsafeBytes(of: machine) { rawBuffer in
+            let bytes = rawBuffer.prefix { $0 != 0 }
+            return String(decoding: bytes, as: UTF8.self)
+        }
     }
 }
