@@ -56,7 +56,18 @@
 "help.settings" = "Einstellungen";
 "help.clear_all" = "Gesamte Liste löschen";
 "help.start" = "Rendern und exportieren";
+"menu.check_for_updates" = "Nach Updates suchen…";
 
 "drop.videos_here" = "Videos hier ablegen";
 
 "action.start" = "Starten";
+
+"update.available_title" = "Update verfügbar";
+"update.available_message" = "Aktuelle Version: %1$@\nNeue Version: %2$@\nRelease: %3$@\n\nRelease Notes:\n%4$@";
+"update.no_release_notes" = "Keine Release Notes verfügbar.";
+"update.open_release_page" = "Release öffnen";
+"update.later" = "Später";
+"update.up_to_date_title" = "Kein Update verfügbar";
+"update.up_to_date_message" = "Du verwendest bereits die aktuelle Version (%@).";
+"update.error_title" = "Update-Prüfung fehlgeschlagen";
+"update.error_message" = "Die Update-Prüfung konnte nicht durchgeführt werden:\n%@";

@@ -56,7 +56,18 @@
 "help.settings" = "Settings";
 "help.clear_all" = "Clear entire list";
 "help.start" = "Render and export";
+"menu.check_for_updates" = "Check for Updates…";
 
 "drop.videos_here" = "Drop videos here";
 
 "action.start" = "Start";
+
+"update.available_title" = "Update Available";
+"update.available_message" = "Current version: %1$@\nNew version: %2$@\nRelease: %3$@\n\nRelease Notes:\n%4$@";
+"update.no_release_notes" = "No release notes available.";
+"update.open_release_page" = "Open Release";
+"update.later" = "Later";
+"update.up_to_date_title" = "No Update Available";
+"update.up_to_date_message" = "You are already using the latest version (%@).";
+"update.error_title" = "Update Check Failed";
+"update.error_message" = "The update check could not be completed:\n%@";

@@ -58,8 +58,24 @@ enum AppStrings {
     static var dropVideosHere: String { text("drop.videos_here") }
     static var clearAllHelp: String { text("help.clear_all") }
     static var startHelp: String { text("help.start") }
+    static var checkForUpdatesMenu: String { text("menu.check_for_updates") }
     static var generatingPreview: String { text("preview.generating") }
     static var startPrompt: String { text("action.start") }
+    static var updateAvailableTitle: String { text("update.available_title") }
+    static var updateNoReleaseNotes: String { text("update.no_release_notes") }
+    static func updateAvailableMessage(_ localVersion: String, _ remoteVersion: String, _ releaseName: String, _ releaseNotes: String) -> String {
+        formatted("update.available_message", localVersion, remoteVersion, releaseName, releaseNotes)
+    }
+    static var updateOpenReleasePage: String { text("update.open_release_page") }
+    static var updateLater: String { text("update.later") }
+    static var updateUpToDateTitle: String { text("update.up_to_date_title") }
+    static func updateUpToDateMessage(_ version: String) -> String {
+        formatted("update.up_to_date_message", version)
+    }
+    static var updateErrorTitle: String { text("update.error_title") }
+    static func updateErrorMessage(_ message: String) -> String {
+        formatted("update.error_message", message)
+    }
 
     private static func text(_ key: String) -> String {
         Bundle.module.localizedString(forKey: key, value: nil, table: "Localizable")

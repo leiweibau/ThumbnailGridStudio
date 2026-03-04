@@ -18,6 +18,7 @@ final class AppViewModel: ObservableObject {
     @Published var importCompletedCount = 0
     @Published var importTotalCount = 0
     @Published var isShowingSettings = false
+    @Published var isCheckingForUpdates = false
     @Published var lastError: String?
 
     let settings = AppSettings()
@@ -193,6 +194,25 @@ final class AppViewModel: ObservableObject {
 
         guard panel.runModal() == .OK, let directory = panel.url else { return }
         await renderAndExportAll(to: directory)
+    }
+
+    func checkForUpdates() async {
+        guard !isCheckingForUpdates else { return }
+        isCheckingForUpdates = true
+        defer { isCheckingForUpdates = false }
+
+        do {
+            let release = try await UpdateService.fetchLatestRelease()
+            let localVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+
+            if UpdateService.isRemoteVersionNewer(remoteTag: release.tagName, localVersion: localVersion) {
+                showUpdateAvailableDialog(release: release, localVersion: localVersion)
+            } else {
+                showUpToDateDialog(localVersion: localVersion)
+            }
+        } catch {
+            showUpdateErrorDialog(error: error)
+        }
     }
 
     func invalidatePreviews() {
@@ -382,6 +402,46 @@ final class AppViewModel: ObservableObject {
             return "light"
         }
         return bestMatch == .darkAqua ? "dark" : "light"
+    }
+
+    private func showUpdateAvailableDialog(release: ReleaseInfo, localVersion: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = AppStrings.updateAvailableTitle
+
+        let notes = release.notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        let notesText = notes.isEmpty ? AppStrings.updateNoReleaseNotes : notes
+        alert.informativeText = AppStrings.updateAvailableMessage(
+            localVersion,
+            release.tagName,
+            release.name,
+            notesText
+        )
+
+        alert.addButton(withTitle: AppStrings.updateOpenReleasePage)
+        alert.addButton(withTitle: AppStrings.updateLater)
+        let result = alert.runModal()
+        if result == .alertFirstButtonReturn {
+            NSWorkspace.shared.open(release.url)
+        }
+    }
+
+    private func showUpToDateDialog(localVersion: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = AppStrings.updateUpToDateTitle
+        alert.informativeText = AppStrings.updateUpToDateMessage(localVersion)
+        alert.addButton(withTitle: AppStrings.ok)
+        alert.runModal()
+    }
+
+    private func showUpdateErrorDialog(error: Error) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = AppStrings.updateErrorTitle
+        alert.informativeText = AppStrings.updateErrorMessage(error.localizedDescription)
+        alert.addButton(withTitle: AppStrings.ok)
+        alert.runModal()
     }
 
     private func renderOptions(for item: VideoItem?) -> ContactSheetRenderOptions {

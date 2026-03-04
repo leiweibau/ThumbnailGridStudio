@@ -10,5 +10,15 @@ struct ClipGridApp: App {
                 .frame(minWidth: 1100, minHeight: 700)
         }
         .windowResizability(.contentMinSize)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                Button(AppStrings.checkForUpdatesMenu) {
+                    Task {
+                        await viewModel.checkForUpdates()
+                    }
+                }
+                .disabled(viewModel.isCheckingForUpdates)
+            }
+        }
     }
 }
