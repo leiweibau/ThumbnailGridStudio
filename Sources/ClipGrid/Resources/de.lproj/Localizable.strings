@@ -64,7 +64,8 @@
 "action.start" = "Starten";
 
 "update.available_title" = "Update verfügbar";
-"update.available_message" = "Aktuelle Version: %1$@\nNeue Version: %2$@\nRelease: %3$@\n\nRelease Notes:\n%4$@";
+"update.available_message" = "Aktuelle Version: %1$@\nNeue Version: %2$@\nRelease: %3$@";
+"update.release_notes_title" = "Release Notes";
 "update.no_release_notes" = "Keine Release Notes verfügbar.";
 "update.open_release_page" = "Release öffnen";
 "update.later" = "Später";

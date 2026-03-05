@@ -414,9 +414,9 @@ final class AppViewModel: ObservableObject {
         alert.informativeText = AppStrings.updateAvailableMessage(
             localVersion,
             release.tagName,
-            release.name,
-            notesText
+            release.name
         )
+        alert.accessoryView = makeScrollableReleaseNotesView(text: notesText)
 
         alert.addButton(withTitle: AppStrings.updateOpenReleasePage)
         alert.addButton(withTitle: AppStrings.updateLater)
@@ -424,6 +424,36 @@ final class AppViewModel: ObservableObject {
         if result == .alertFirstButtonReturn {
             NSWorkspace.shared.open(release.url)
         }
+    }
+
+    private func makeScrollableReleaseNotesView(text: String) -> NSView {
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 560, height: 250))
+
+        let titleLabel = NSTextField(labelWithString: AppStrings.updateReleaseNotesTitle)
+        titleLabel.font = NSFont.boldSystemFont(ofSize: NSFont.systemFontSize)
+        titleLabel.frame = NSRect(x: 0, y: 228, width: 560, height: 18)
+        container.addSubview(titleLabel)
+
+        let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 560, height: 220))
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.borderType = .bezelBorder
+
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 560, height: 220))
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.drawsBackground = false
+        textView.string = text
+        textView.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        textView.textContainerInset = NSSize(width: 6, height: 6)
+        textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.containerSize = NSSize(width: 560, height: CGFloat.greatestFiniteMagnitude)
+
+        scrollView.documentView = textView
+        container.addSubview(scrollView)
+
+        return container
     }
 
     private func showUpToDateDialog(localVersion: String) {

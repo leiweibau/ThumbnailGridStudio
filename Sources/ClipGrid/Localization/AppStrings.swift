@@ -64,8 +64,9 @@ enum AppStrings {
     static var startPrompt: String { text("action.start") }
     static var updateAvailableTitle: String { text("update.available_title") }
     static var updateNoReleaseNotes: String { text("update.no_release_notes") }
-    static func updateAvailableMessage(_ localVersion: String, _ remoteVersion: String, _ releaseName: String, _ releaseNotes: String) -> String {
-        formatted("update.available_message", localVersion, remoteVersion, releaseName, releaseNotes)
+    static var updateReleaseNotesTitle: String { text("update.release_notes_title") }
+    static func updateAvailableMessage(_ localVersion: String, _ remoteVersion: String, _ releaseName: String) -> String {
+        formatted("update.available_message", localVersion, remoteVersion, releaseName)
     }
     static var updateOpenReleasePage: String { text("update.open_release_page") }
     static var updateLater: String { text("update.later") }
