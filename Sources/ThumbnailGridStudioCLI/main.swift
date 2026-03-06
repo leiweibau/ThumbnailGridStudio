@@ -666,7 +666,7 @@ private enum CLIRunner {
             data = bitmapRep.representation(
                 using: .png,
                 properties: [
-                    .compressionFactor: 1.0,
+                    .compressionFactor: 0.5,
                     .interlaced: false
                 ]
             )

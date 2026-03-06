@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
+import WebKit
 
 @MainActor
 final class AppViewModel: ObservableObject {
@@ -24,6 +25,7 @@ final class AppViewModel: ObservableObject {
     let settings = AppSettings()
     private var cachedPlaceholderPreviewKey: String?
     private var cachedPlaceholderPreviewImage: NSImage?
+    private var updateWindowController: UpdateWindowController?
 
     private let fileSizeFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
@@ -397,55 +399,305 @@ final class AppViewModel: ObservableObject {
     }
 
     private func showUpdateAvailableDialog(release: ReleaseInfo, localVersion: String) {
-        let alert = NSAlert()
-        alert.alertStyle = .informational
-        alert.messageText = AppStrings.updateAvailableTitle
-
         let notes = release.notes.trimmingCharacters(in: .whitespacesAndNewlines)
         let notesText = notes.isEmpty ? AppStrings.updateNoReleaseNotes : notes
-        alert.informativeText = AppStrings.updateAvailableMessage(
+        let messageText = AppStrings.updateAvailableMessage(
             localVersion,
-            release.tagName,
-            release.name
+            release.tagName
         )
-        alert.accessoryView = makeScrollableReleaseNotesView(text: notesText)
-
-        alert.addButton(withTitle: AppStrings.updateOpenReleasePage)
-        alert.addButton(withTitle: AppStrings.updateLater)
-        let result = alert.runModal()
-        if result == .alertFirstButtonReturn {
-            NSWorkspace.shared.open(release.url)
-        }
+        presentUpdateAvailableWindow(message: messageText, notes: notesText, releaseURL: release.url)
     }
 
-    private func makeScrollableReleaseNotesView(text: String) -> NSView {
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 560, height: 250))
+    private func makeReleaseNotesWebView(text: String) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .nonPersistent()
 
-        let titleLabel = NSTextField(labelWithString: AppStrings.updateReleaseNotesTitle)
-        titleLabel.font = NSFont.boldSystemFont(ofSize: NSFont.systemFontSize)
-        titleLabel.frame = NSRect(x: 0, y: 228, width: 560, height: 18)
-        container.addSubview(titleLabel)
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.translatesAutoresizingMaskIntoConstraints = false
+        webView.setValue(false, forKey: "drawsBackground")
+        webView.loadHTMLString(releaseNotesHTML(markdown: text), baseURL: nil)
+        return webView
+    }
 
-        let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 560, height: 220))
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
-        scrollView.autohidesScrollers = true
-        scrollView.borderType = .bezelBorder
+    private func presentUpdateAvailableWindow(message: String, notes: String, releaseURL: URL) {
+        updateWindowController?.close()
 
-        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 560, height: 220))
-        textView.isEditable = false
-        textView.isSelectable = true
-        textView.drawsBackground = false
-        textView.string = text
-        textView.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-        textView.textContainerInset = NSSize(width: 6, height: 6)
-        textView.textContainer?.widthTracksTextView = true
-        textView.textContainer?.containerSize = NSSize(width: 560, height: CGFloat.greatestFiniteMagnitude)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 700, height: 560),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = AppStrings.updateAvailableTitle
+        window.isReleasedWhenClosed = false
+        window.center()
 
-        scrollView.documentView = textView
-        container.addSubview(scrollView)
+        let contentView = NSView()
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        window.contentView = contentView
 
-        return container
+        let iconView = NSImageView()
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.image = NSApp.applicationIconImage
+        iconView.imageScaling = .scaleProportionallyUpOrDown
+
+        let titleLabel = NSTextField(labelWithString: AppStrings.updateAvailableTitle)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.font = NSFont.systemFont(ofSize: 17, weight: .semibold)
+        titleLabel.alignment = .center
+
+        let messageLabel = NSTextField(wrappingLabelWithString: message)
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+        messageLabel.lineBreakMode = .byWordWrapping
+        messageLabel.alignment = .center
+
+        let notesWebView = makeReleaseNotesWebView(text: notes)
+
+        let openButton = NSButton(title: AppStrings.updateOpenReleasePage, target: nil, action: nil)
+        openButton.translatesAutoresizingMaskIntoConstraints = false
+        openButton.bezelStyle = .rounded
+        openButton.keyEquivalent = "\r"
+
+        let laterButton = NSButton(title: AppStrings.updateLater, target: nil, action: nil)
+        laterButton.translatesAutoresizingMaskIntoConstraints = false
+        laterButton.bezelStyle = .rounded
+        laterButton.keyEquivalent = "\u{1b}"
+
+        contentView.addSubview(iconView)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(messageLabel)
+        contentView.addSubview(notesWebView)
+        contentView.addSubview(openButton)
+        contentView.addSubview(laterButton)
+
+        let controller = UpdateWindowController(window: window, releaseURL: releaseURL)
+        controller.onClose = { [weak self] in
+            self?.updateWindowController = nil
+        }
+        updateWindowController = controller
+
+        openButton.target = controller
+        openButton.action = #selector(UpdateWindowController.openRelease)
+        laterButton.target = controller
+        laterButton.action = #selector(UpdateWindowController.later)
+        window.standardWindowButton(.closeButton)?.target = controller
+        window.standardWindowButton(.closeButton)?.action = #selector(UpdateWindowController.later)
+
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 18),
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+
+            iconView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
+            iconView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 56),
+            iconView.heightAnchor.constraint(equalToConstant: 56),
+
+            messageLabel.topAnchor.constraint(equalTo: iconView.bottomAnchor, constant: 10),
+            messageLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            messageLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 460),
+            messageLabel.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 16),
+            messageLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -16),
+
+            notesWebView.topAnchor.constraint(equalTo: messageLabel.bottomAnchor, constant: 28),
+            notesWebView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            notesWebView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            notesWebView.heightAnchor.constraint(equalToConstant: 220),
+
+            laterButton.topAnchor.constraint(equalTo: notesWebView.bottomAnchor, constant: 12),
+            laterButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            laterButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
+
+            openButton.centerYAnchor.constraint(equalTo: laterButton.centerYAnchor),
+            openButton.trailingAnchor.constraint(equalTo: laterButton.leadingAnchor, constant: -8)
+        ])
+
+        window.initialFirstResponder = notesWebView
+        window.delegate = controller
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func releaseNotesHTML(markdown: String) -> String {
+        let body = markdownToHTML(markdown)
+        return """
+        <!doctype html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            :root { color-scheme: light dark; }
+            body {
+              margin: 0;
+              padding: 12px;
+              font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+              line-height: 1.5;
+              color: #24292f;
+              background: transparent;
+            }
+            @media (prefers-color-scheme: dark) {
+              body { color: #c9d1d9; }
+              code, pre { background: #161b22; border-color: #30363d; }
+              a { color: #58a6ff; }
+              blockquote { color: #8b949e; border-left-color: #30363d; }
+            }
+            h1, h2, h3, h4, h5, h6 { margin: 0.8em 0 0.4em; line-height: 1.25; }
+            p, ul, ol, pre, blockquote { margin: 0.5em 0; }
+            ul, ol { padding-left: 1.5em; }
+            code {
+              padding: 0.1em 0.3em;
+              border-radius: 6px;
+              background: rgba(175,184,193,0.2);
+              border: 1px solid rgba(175,184,193,0.3);
+              font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+              font-size: 0.9em;
+            }
+            pre {
+              padding: 10px;
+              border-radius: 8px;
+              overflow-x: auto;
+              background: rgba(175,184,193,0.2);
+              border: 1px solid rgba(175,184,193,0.3);
+            }
+            pre code { border: none; background: transparent; padding: 0; }
+            blockquote {
+              margin-left: 0;
+              padding-left: 12px;
+              border-left: 3px solid rgba(175,184,193,0.5);
+              color: #57606a;
+            }
+            a { color: #0969da; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+          </style>
+        </head>
+        <body>\(body)</body>
+        </html>
+        """
+    }
+
+    private func markdownToHTML(_ markdown: String) -> String {
+        var html: [String] = []
+        var inUL = false
+        var inOL = false
+        var inCode = false
+
+        func closeLists() {
+            if inUL { html.append("</ul>"); inUL = false }
+            if inOL { html.append("</ol>"); inOL = false }
+        }
+
+        for raw in markdown.replacingOccurrences(of: "\r\n", with: "\n").split(separator: "\n", omittingEmptySubsequences: false) {
+            let line = String(raw)
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+            if trimmed.hasPrefix("```") {
+                closeLists()
+                if inCode {
+                    html.append("</code></pre>")
+                    inCode = false
+                } else {
+                    html.append("<pre><code>")
+                    inCode = true
+                }
+                continue
+            }
+
+            if inCode {
+                html.append(escapeHTML(line) + "\n")
+                continue
+            }
+
+            if trimmed.isEmpty {
+                closeLists()
+                continue
+            }
+
+            if let h = headingHTML(for: trimmed) {
+                closeLists()
+                html.append(h)
+                continue
+            }
+
+            if let li = listItemHTML(for: trimmed, marker: "- ") ?? listItemHTML(for: trimmed, marker: "* ") {
+                if inOL { html.append("</ol>"); inOL = false }
+                if !inUL { html.append("<ul>"); inUL = true }
+                html.append("<li>\(li)</li>")
+                continue
+            }
+
+            if let li = orderedListItemHTML(for: trimmed) {
+                if inUL { html.append("</ul>"); inUL = false }
+                if !inOL { html.append("<ol>"); inOL = true }
+                html.append("<li>\(li)</li>")
+                continue
+            }
+
+            if trimmed.hasPrefix("> ") {
+                closeLists()
+                let content = String(trimmed.dropFirst(2))
+                html.append("<blockquote>\(inlineMarkdownToHTML(content))</blockquote>")
+                continue
+            }
+
+            closeLists()
+            html.append("<p>\(inlineMarkdownToHTML(trimmed))</p>")
+        }
+
+        closeLists()
+        if inCode { html.append("</code></pre>") }
+        return html.joined()
+    }
+
+    private func headingHTML(for trimmedLine: String) -> String? {
+        let levels = [6, 5, 4, 3, 2, 1]
+        for level in levels {
+            let prefix = String(repeating: "#", count: level) + " "
+            if trimmedLine.hasPrefix(prefix) {
+                let content = String(trimmedLine.dropFirst(prefix.count))
+                return "<h\(level)>\(inlineMarkdownToHTML(content))</h\(level)>"
+            }
+        }
+        return nil
+    }
+
+    private func listItemHTML(for trimmedLine: String, marker: String) -> String? {
+        guard trimmedLine.hasPrefix(marker) else { return nil }
+        return inlineMarkdownToHTML(String(trimmedLine.dropFirst(marker.count)))
+    }
+
+    private func orderedListItemHTML(for trimmedLine: String) -> String? {
+        let regex = try? NSRegularExpression(pattern: #"^\d+\.\s+(.+)$"#)
+        let range = NSRange(trimmedLine.startIndex..<trimmedLine.endIndex, in: trimmedLine)
+        guard let match = regex?.firstMatch(in: trimmedLine, range: range),
+              let contentRange = Range(match.range(at: 1), in: trimmedLine) else {
+            return nil
+        }
+        return inlineMarkdownToHTML(String(trimmedLine[contentRange]))
+    }
+
+    private func inlineMarkdownToHTML(_ text: String) -> String {
+        var result = escapeHTML(text)
+        result = replacing(result, pattern: #"\[([^\]]+)\]\((https?://[^)\s]+)\)"#, template: "$1 ($2)")
+        result = replacing(result, pattern: #"`([^`]+)`"#, template: "<code>$1</code>")
+        result = replacing(result, pattern: #"\*\*([^*]+)\*\*"#, template: "<strong>$1</strong>")
+        result = replacing(result, pattern: #"\*([^*]+)\*"#, template: "<em>$1</em>")
+        return result
+    }
+
+    private func replacing(_ text: String, pattern: String, template: String) -> String {
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return text }
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        return regex.stringByReplacingMatches(in: text, range: range, withTemplate: template)
+    }
+
+    private func escapeHTML(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&#39;")
     }
 
     private func showUpToDateDialog(localVersion: String) {
@@ -671,6 +923,39 @@ final class AppViewModel: ObservableObject {
     }
 }
 
+@MainActor
+private final class UpdateWindowController: NSWindowController, NSWindowDelegate {
+    private let releaseURL: URL
+    var onClose: (() -> Void)?
+
+    init(window: NSWindow, releaseURL: URL) {
+        self.releaseURL = releaseURL
+        super.init(window: window)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        nil
+    }
+
+    @objc func openRelease() {
+        NSWorkspace.shared.open(releaseURL)
+        closeWindow()
+    }
+
+    @objc func later() {
+        closeWindow()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        onClose?()
+    }
+
+    private func closeWindow() {
+        window?.close()
+    }
+}
+
 private struct RenderJobInput: Sendable {
     let id: UUID
     let url: URL
@@ -836,7 +1121,7 @@ private extension NSImage {
         srgbBitmapRepresentation()?.representation(
             using: .png,
             properties: [
-                .compressionFactor: 1.0,
+                .compressionFactor: 0.5,
                 .interlaced: false
             ]
         )
