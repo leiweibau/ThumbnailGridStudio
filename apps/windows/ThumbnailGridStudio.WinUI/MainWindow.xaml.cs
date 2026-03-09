@@ -152,22 +152,55 @@ public sealed partial class MainWindow : Window
 
     private async void AddVideosClick(object sender, RoutedEventArgs e)
     {
-        var picker = new FileOpenPicker();
-        picker.FileTypeFilter.Add(".mp4");
-        picker.FileTypeFilter.Add(".mov");
-        picker.FileTypeFilter.Add(".m4v");
-        picker.FileTypeFilter.Add(".avi");
-        picker.FileTypeFilter.Add(".mkv");
-        picker.FileTypeFilter.Add(".webm");
-
-        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-        var files = await picker.PickMultipleFilesAsync();
-        if (files is null || files.Count == 0)
+        if (Content is not FrameworkElement root)
         {
             return;
         }
 
-        await ViewModel.AddVideosAsync(files.Select(file => file.Path));
+        var modeDialog = new ContentDialog
+        {
+            XamlRoot = root.XamlRoot,
+            Title = "Import",
+            Content = "Was möchtest du hinzufügen?",
+            PrimaryButtonText = "Dateien auswählen",
+            SecondaryButtonText = "Ordner auswählen",
+            CloseButtonText = "Abbrechen"
+        };
+
+        var result = await modeDialog.ShowAsync();
+        var importedPaths = new List<string>();
+
+        if (result == ContentDialogResult.Primary)
+        {
+            var picker = new FileOpenPicker();
+            picker.FileTypeFilter.Add("*");
+            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+
+            var files = await picker.PickMultipleFilesAsync();
+            if (files is not null)
+            {
+                importedPaths.AddRange(files.Select(file => file.Path));
+            }
+        }
+        else if (result == ContentDialogResult.Secondary)
+        {
+            var picker = new FolderPicker();
+            picker.FileTypeFilter.Add("*");
+            InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+
+            var folder = await picker.PickSingleFolderAsync();
+            if (folder is not null)
+            {
+                importedPaths.AddRange(await CollectVideoFilesFromFolderAsync(folder));
+            }
+        }
+
+        if (importedPaths.Count == 0)
+        {
+            return;
+        }
+
+        await ViewModel.AddVideosAsync(importedPaths);
     }
 
     private void RemoveSelectedClick(object sender, RoutedEventArgs e)

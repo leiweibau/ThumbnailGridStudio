@@ -148,7 +148,7 @@ Write-Host "Published to $publishOutputDir"
 if ($CreateZip) {
     $versionTag = Resolve-VersionTag -projectPath $project
     $runtimeTag = $Runtime -replace "-", "_"
-    $zipName = "ThumbnailGridStudio-v$versionTag-$runtimeTag.zip"
+    $zipName = "ThumbnailGridStudio-$versionTag-$runtimeTag.zip"
     $zipPath = Join-Path (Split-Path -Parent $publishOutputDir) $zipName
 
     if (Test-Path $zipPath) {

@@ -125,12 +125,24 @@ public sealed class MainViewModel : ObservableObject
             var processor = new VideoProcessingService(tools);
 
             var existing = new HashSet<string>(Videos.Select(v => v.FilePath), StringComparer.OrdinalIgnoreCase);
-            var inputs = filePaths
+            var candidates = filePaths
                 .Where(File.Exists)
-                .Where(IsSupportedVideo)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Where(path => !existing.Contains(path))
                 .ToList();
+
+            var unsupportedExtensionCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var inputs = new List<string>(candidates.Count);
+            foreach (var path in candidates)
+            {
+                if (IsSupportedVideo(path))
+                {
+                    inputs.Add(path);
+                    continue;
+                }
+
+                AddExtensionCount(unsupportedExtensionCounts, path);
+            }
 
             _completed = 0;
             _total = inputs.Count;
@@ -145,11 +157,12 @@ public sealed class MainViewModel : ObservableObject
                 try
                 {
                     var metadata = await processor.LoadMetadataAsync(entry.path);
-                    importResults[entry.index] = new ImportResult(entry.path, metadata, null);
+                    importResults[entry.index] = new ImportResult(entry.path, metadata, null, false);
                 }
                 catch (Exception ex)
                 {
-                    importResults[entry.index] = new ImportResult(entry.path, null, ex.Message);
+                    var unsupported = IsUnsupportedImportError(ex.Message);
+                    importResults[entry.index] = new ImportResult(entry.path, null, ex.Message, unsupported);
                 }
                 finally
                 {
@@ -182,12 +195,30 @@ public sealed class MainViewModel : ObservableObject
 
                 if (!string.IsNullOrWhiteSpace(result?.Error))
                 {
-                    LastError = string.Format(
-                        CultureInfo.CurrentCulture,
-                        Localizer.Get("View.Error.ImportFailed", "Import fehlgeschlagen ({0}): {1}"),
-                        Path.GetFileName(result.Path),
-                        result.Error);
+                    if (result.IsUnsupported)
+                    {
+                        AddExtensionCount(unsupportedExtensionCounts, result.Path);
+                    }
+                    else
+                    {
+                        LastError = string.Format(
+                            CultureInfo.CurrentCulture,
+                            Localizer.Get("View.Error.ImportFailed", "Import fehlgeschlagen ({0}): {1}"),
+                            Path.GetFileName(result.Path),
+                            result.Error);
+                    }
                 }
+            }
+
+            if (unsupportedExtensionCounts.Count > 0)
+            {
+                var summary = FormatUnsupportedExtensionSummary(unsupportedExtensionCounts);
+                LastError = string.Format(
+                    CultureInfo.CurrentCulture,
+                    Localizer.Get(
+                        "View.Error.UnsupportedExtensions",
+                        "Folgende Dateiendungen wurden wegen fehlender Unterstützung nicht importiert: {0}"),
+                    summary);
             }
         }
         catch (Exception ex)
@@ -535,6 +566,45 @@ public sealed class MainViewModel : ObservableObject
         return SupportedExtensions.Contains(Path.GetExtension(path));
     }
 
+    private static bool IsUnsupportedImportError(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return false;
+        }
+
+        return error.Contains("No video stream found.", StringComparison.OrdinalIgnoreCase)
+            || error.Contains("missing valid video duration", StringComparison.OrdinalIgnoreCase)
+            || error.Contains("Invalid data found when processing input", StringComparison.OrdinalIgnoreCase)
+            || error.Contains("could not find codec parameters", StringComparison.OrdinalIgnoreCase)
+            || error.Contains("unsupported", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AddExtensionCount(IDictionary<string, int> target, string path)
+    {
+        var ext = Path.GetExtension(path);
+        var normalized = string.IsNullOrWhiteSpace(ext)
+            ? Localizer.Get("View.Error.NoExtension", "(ohne Endung)")
+            : ext.TrimStart('.').ToLowerInvariant();
+
+        if (!target.TryAdd(normalized, 1))
+        {
+            target[normalized]++;
+        }
+    }
+
+    private static string FormatUnsupportedExtensionSummary(IReadOnlyDictionary<string, int> extensionCounts)
+    {
+        var ordered = extensionCounts
+            .OrderBy(kvp => kvp.Key, StringComparer.CurrentCultureIgnoreCase)
+            .Select(kvp => string.Format(
+                CultureInfo.CurrentCulture,
+                Localizer.Get("View.Error.ExtensionCountItem", "{0}x {1}"),
+                kvp.Value,
+                kvp.Key));
+        return string.Join(", ", ordered);
+    }
+
     private void NotifyProgress()
     {
         OnPropertyChanged(nameof(ProgressPercent));
@@ -608,5 +678,5 @@ public sealed class MainViewModel : ObservableObject
         return string.Create(CultureInfo.InvariantCulture, $"{hours:00}-{minutes:00}-{seconds:00}_{millis:000}");
     }
 
-    private sealed record ImportResult(string Path, VideoMetadata? Metadata, string? Error);
+    private sealed record ImportResult(string Path, VideoMetadata? Metadata, string? Error, bool IsUnsupported);
 }

@@ -67,12 +67,21 @@ public sealed class VideoProcessingService
                       ?? throw new InvalidOperationException("ffprobe JSON konnte nicht gelesen werden.");
 
         var stream = payload.Streams.FirstOrDefault();
+        if (stream is null)
+        {
+            throw new InvalidOperationException("No video stream found.");
+        }
+
         var width = (int)Math.Round(stream?.Width ?? 0);
         var height = (int)Math.Round(stream?.Height ?? 0);
         var seconds = ParseDurationSeconds(payload.Format?.Duration);
         if (seconds <= 0)
         {
             seconds = ParseDurationSeconds(stream?.Duration);
+        }
+        if (seconds <= 0)
+        {
+            throw new InvalidOperationException("Unsupported media type: missing valid video duration.");
         }
 
         return new VideoMetadata(
