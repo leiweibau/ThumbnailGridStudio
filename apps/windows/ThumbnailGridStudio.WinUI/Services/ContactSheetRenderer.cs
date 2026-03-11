@@ -53,13 +53,14 @@ public static class ContactSheetRenderer
     {
         var horizontalPadding = 28;
         var verticalPadding = 28;
+        var metadataToGridGap = 10;
         var thumbWidth = thumbnails.Count > 0 ? Math.Max(thumbnails[0].Image.Width, 1) : settings.ThumbnailWidth;
         var thumbHeight = thumbnails.Count > 0 ? Math.Max(thumbnails[0].Image.Height, 1) : settings.ThumbnailHeight;
         var gridWidth = settings.Columns * thumbWidth + Math.Max(0, settings.Columns - 1) * settings.Spacing;
         var gridHeight = settings.Rows * thumbHeight + Math.Max(0, settings.Rows - 1) * settings.Spacing;
         var headerHeight = CalculateHeaderHeight(settings);
         var canvasWidth = horizontalPadding * 2 + gridWidth;
-        var canvasHeight = verticalPadding * 2 + headerHeight + gridHeight;
+        var canvasHeight = verticalPadding * 2 + headerHeight + metadataToGridGap + gridHeight;
 
         using var bitmap = new Bitmap(canvasWidth, canvasHeight);
         using var graphics = Graphics.FromImage(bitmap);
@@ -69,7 +70,7 @@ public static class ContactSheetRenderer
         graphics.Clear(ParseHexColor(settings.BackgroundHex, Color.FromArgb(31, 33, 38)));
 
         var headerTop = verticalPadding;
-        var gridTop = verticalPadding + headerHeight;
+        var gridTop = verticalPadding + headerHeight + metadataToGridGap;
         DrawHeader(graphics, metadata, fileName, settings, horizontalPadding, headerTop);
         DrawGrid(graphics, thumbnails, settings, horizontalPadding, gridTop, thumbWidth, thumbHeight);
 
