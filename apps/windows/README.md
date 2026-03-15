@@ -19,6 +19,7 @@ The most important capabilities in the current version are:
 - German and English UI localization (based on Windows display language)
 - One-click render and export for all loaded videos
 - Light gray empty preview state with centered workspace title
+- Additional CLI app that can reuse GUI settings and override them via command line
 
 ## Requirements
 
@@ -38,9 +39,38 @@ For publish output:
 powershell -ExecutionPolicy Bypass -File .\apps\windows\publish-winui-selfcontained.ps1 -Configuration Release -Runtime win-x64 -Platform x64
 ```
 
+The publish script also places `ThumbnailGridStudio-cli.exe` in the same app directory
+(`apps/windows/dist/Thumbnail Grid Studio`) and includes it in the generated ZIP.
+The CLI is framework-dependent; the publish script additionally downloads
+`dotnet-runtime-10.0.3-win-x64.exe` into the same directory so the required runtime can be installed offline.
+The publish step removes app-local `hostfxr.dll` to avoid host resolution conflicts between
+the self-contained GUI files and the framework-dependent CLI executable.
+
+Build CLI:
+
+```powershell
+dotnet build .\apps\windows\ThumbnailGridStudio.Cli\ThumbnailGridStudio.Cli.csproj -c Release
+```
+
+Run CLI:
+
+```powershell
+dotnet run --project .\apps\windows\ThumbnailGridStudio.Cli\ThumbnailGridStudio.Cli.csproj -- `
+  --input "D:\Videos" `
+  --output "D:\Exports" `
+  --columns 5 `
+  --rows 4 `
+  --format png `
+  --show-timestamp true
+```
+
+The CLI first loads GUI settings from `%LOCALAPPDATA%\ThumbnailGridStudio\settings.json`.
+All passed CLI parameters override the loaded values.
+
 ## Project Structure
 
 - `apps/windows/ThumbnailGridStudio.WinUI`: WinUI 3 app sources, view models, renderer, and services
+- `apps/windows/ThumbnailGridStudio.Cli`: command line renderer
 - `apps/windows/ThumbnailGridStudio.WinUI/Assets`: app icon assets
 - `apps/windows/ThumbnailGridStudio.WinUI/Tools/win-x64`: bundled `ffmpeg` and `ffprobe`
 - `apps/windows/build-winui.ps1`: local build script

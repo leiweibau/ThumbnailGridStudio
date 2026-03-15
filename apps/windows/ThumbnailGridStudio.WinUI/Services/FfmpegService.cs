@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 namespace ThumbnailGridStudio.WinUI.Services;
 
@@ -21,10 +22,12 @@ public static class FfmpegService
             return explicitPath;
         }
 
-        var bundled = GetBundledPath(executableName);
-        if (File.Exists(bundled))
+        foreach (var bundled in GetBundledPaths(executableName))
         {
-            return bundled;
+            if (File.Exists(bundled))
+            {
+                return bundled;
+            }
         }
 
         var fromPath = ResolveFromPath(executableName);
@@ -38,9 +41,75 @@ public static class FfmpegService
             $"`Tools\\{CurrentArchFolder()}\\` ab oder setze {envVar}.");
     }
 
-    private static string GetBundledPath(string executableName)
+    private static IEnumerable<string> GetBundledPaths(string executableName)
     {
-        return Path.Combine(AppContext.BaseDirectory, "Tools", CurrentArchFolder(), executableName);
+        var archFolder = CurrentArchFolder();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var root in EnumerateCandidateRoots())
+        {
+            var candidate = Path.GetFullPath(Path.Combine(root, "Tools", archFolder, executableName));
+            if (seen.Add(candidate))
+            {
+                yield return candidate;
+            }
+        }
+    }
+
+    private static IEnumerable<string> EnumerateCandidateRoots()
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var path in ExpandWithParents(AppContext.BaseDirectory))
+        {
+            if (seen.Add(path))
+            {
+                yield return path;
+            }
+        }
+
+        foreach (var path in ExpandWithParents(Path.GetDirectoryName(Environment.ProcessPath)))
+        {
+            if (seen.Add(path))
+            {
+                yield return path;
+            }
+        }
+
+        foreach (var path in ExpandWithParents(Environment.CurrentDirectory))
+        {
+            if (seen.Add(path))
+            {
+                yield return path;
+            }
+        }
+    }
+
+    private static IEnumerable<string> ExpandWithParents(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            yield break;
+        }
+
+        var current = Path.GetFullPath(path);
+        for (var depth = 0; depth < 6; depth++)
+        {
+            if (string.IsNullOrWhiteSpace(current))
+            {
+                yield break;
+            }
+
+            yield return current;
+
+            var parent = Directory.GetParent(current)?.FullName;
+            if (string.IsNullOrWhiteSpace(parent) || string.Equals(parent, current, StringComparison.OrdinalIgnoreCase))
+            {
+                yield break;
+            }
+
+            current = parent;
+        }
     }
 
     private static string CurrentArchFolder()

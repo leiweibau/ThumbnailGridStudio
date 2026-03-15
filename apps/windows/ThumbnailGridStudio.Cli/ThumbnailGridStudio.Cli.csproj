@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseSystemDrawing>true</UseSystemDrawing>
+    <AssemblyName>ThumbnailGridStudio-cli</AssemblyName>
+    <RootNamespace>ThumbnailGridStudio.Cli</RootNamespace>
+    <Version>1.3.2</Version>
+    <AssemblyVersion>1.3.2.0</AssemblyVersion>
+    <FileVersion>1.3.2.0</FileVersion>
+    <InformationalVersion>1.3.2</InformationalVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\ThumbnailGridStudio.WinUI\Helpers\ObservableObject.cs" Link="Shared\Helpers\ObservableObject.cs" />
+    <Compile Include="..\ThumbnailGridStudio.WinUI\Models\AppSettings.cs" Link="Shared\Models\AppSettings.cs" />
+    <Compile Include="..\ThumbnailGridStudio.WinUI\Services\FfmpegService.cs" Link="Shared\Services\FfmpegService.cs" />
+    <Compile Include="..\ThumbnailGridStudio.WinUI\Services\VideoProcessingService.cs" Link="Shared\Services\VideoProcessingService.cs" />
+    <Compile Include="..\ThumbnailGridStudio.WinUI\Services\ContactSheetRenderer.cs" Link="Shared\Services\ContactSheetRenderer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="8.0.12" />
+  </ItemGroup>
+
+</Project>

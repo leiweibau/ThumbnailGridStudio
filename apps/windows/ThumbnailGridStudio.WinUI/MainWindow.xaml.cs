@@ -20,6 +20,8 @@ namespace ThumbnailGridStudio.WinUI;
 
 public sealed partial class MainWindow : Window
 {
+    private const string LegacyOutputSettingsFileName = "settings.json";
+    private const string OutputSettingsFileName = "output-settings.json";
     public MainViewModel ViewModel { get; } = new();
     private string _lastOutputDirectory = LoadLastOutputDirectory();
     private AppWindow? _appWindow;
@@ -231,16 +233,14 @@ public sealed partial class MainWindow : Window
         var fallback = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
         try
         {
-            var settingsPath = GetOutputSettingsPath();
-            if (File.Exists(settingsPath))
+            if (TryReadOutputDirectory(GetOutputSettingsPath(), out var currentPath))
             {
-                var json = File.ReadAllText(settingsPath);
-                var data = JsonSerializer.Deserialize<OutputSettings>(json);
-                var path = data?.LastOutputDirectory;
-                if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
-                {
-                    return path;
-                }
+                return currentPath;
+            }
+
+            if (TryReadOutputDirectory(GetLegacyOutputSettingsPath(), out var legacyPath))
+            {
+                return legacyPath;
             }
         }
         catch
@@ -271,7 +271,34 @@ public sealed partial class MainWindow : Window
         var baseDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "ThumbnailGridStudio");
-        return Path.Combine(baseDir, "settings.json");
+        return Path.Combine(baseDir, OutputSettingsFileName);
+    }
+
+    private static string GetLegacyOutputSettingsPath()
+    {
+        var baseDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "ThumbnailGridStudio");
+        return Path.Combine(baseDir, LegacyOutputSettingsFileName);
+    }
+
+    private static bool TryReadOutputDirectory(string path, out string directory)
+    {
+        directory = string.Empty;
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
+        var json = File.ReadAllText(path);
+        var data = JsonSerializer.Deserialize<OutputSettings>(json);
+        if (string.IsNullOrWhiteSpace(data?.LastOutputDirectory) || !Directory.Exists(data.LastOutputDirectory))
+        {
+            return false;
+        }
+
+        directory = data.LastOutputDirectory;
+        return true;
     }
 
     private static void TrySetWindowIcon(AppWindow appWindow)
@@ -561,6 +588,11 @@ public sealed partial class MainWindow : Window
         UpdateDimensionPlaceholders(width, height);
         width.TextChanged += (_, _) => UpdateDimensionPlaceholders(width, height);
         height.TextChanged += (_, _) => UpdateDimensionPlaceholders(width, height);
+        var rootWidth = root.ActualWidth > 0 ? root.ActualWidth : 1200d;
+        var rootHeight = root.ActualHeight > 0 ? root.ActualHeight : 800d;
+        var dialogWidth = Math.Clamp(rootWidth * 0.94, 640d, 1300d);
+        var dialogHeight = Math.Clamp(rootHeight * 0.9, 420d, 900d);
+        var useTwoColumns = dialogWidth >= 900d;
 
         var left = new StackPanel { Spacing = 8 };
         left.Children.Add(new TextBlock { Text = L("Settings.Layout", "Layout"), FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
@@ -580,13 +612,23 @@ public sealed partial class MainWindow : Window
         var layoutGrid = new Grid
         {
             ColumnSpacing = 22,
-            Width = 980
+            RowSpacing = 10
         };
         layoutGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        layoutGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         layoutGrid.Children.Add(left);
-        layoutGrid.Children.Add(right);
-        Grid.SetColumn(right, 1);
+        if (useTwoColumns)
+        {
+            layoutGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            layoutGrid.Children.Add(right);
+            Grid.SetColumn(right, 1);
+        }
+        else
+        {
+            layoutGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            layoutGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            layoutGrid.Children.Add(right);
+            Grid.SetRow(right, 1);
+        }
 
         var metadataSection = new StackPanel { Spacing = 8 };
         metadataSection.Children.Add(new TextBlock
@@ -595,8 +637,7 @@ public sealed partial class MainWindow : Window
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
         });
 
-        var metadataBlocks = new Grid { ColumnSpacing = 18, Width = 980 };
-        metadataBlocks.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var metadataBlocks = new Grid { ColumnSpacing = 18, RowSpacing = 8 };
         metadataBlocks.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
         var leftMetaBlock = new StackPanel { Spacing = 8 };
@@ -609,29 +650,51 @@ public sealed partial class MainWindow : Window
         rightMetaBlock.Children.Add(BuildMetadataRow(resolutionVisible, resolutionFontPx));
 
         metadataBlocks.Children.Add(leftMetaBlock);
-        metadataBlocks.Children.Add(rightMetaBlock);
-        Grid.SetColumn(rightMetaBlock, 1);
+        if (useTwoColumns)
+        {
+            metadataBlocks.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            metadataBlocks.Children.Add(rightMetaBlock);
+            Grid.SetColumn(rightMetaBlock, 1);
+        }
+        else
+        {
+            metadataBlocks.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            metadataBlocks.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            metadataBlocks.Children.Add(rightMetaBlock);
+            Grid.SetRow(rightMetaBlock, 1);
+        }
 
         metadataSection.Children.Add(metadataBlocks);
         
-        var formStack = new StackPanel { Spacing = 14, Width = 1000 };
+        var formStack = new StackPanel { Spacing = 14 };
         formStack.Children.Add(layoutGrid);
         formStack.Children.Add(metadataSection);
 
-        var contentHost = new StackPanel { Spacing = 12 };
-        contentHost.Children.Add(new ScrollViewer
+        var settingsScrollViewer = new ScrollViewer
         {
             Content = formStack,
-            Width = 1000,
-            MaxHeight = 620
-        });
+            VerticalScrollMode = ScrollMode.Enabled,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollMode = ScrollMode.Disabled,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            MaxHeight = Math.Max(220d, dialogHeight - 190d)
+        };
 
         var buttonRow = new Grid
         {
-            Margin = new Thickness(0, 40, 0, 0)
+            Margin = new Thickness(0, 24, 0, 0)
         };
-        buttonRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        buttonRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        if (useTwoColumns)
+        {
+            buttonRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            buttonRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        }
+        else
+        {
+            buttonRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            buttonRow.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            buttonRow.RowSpacing = 10;
+        }
 
         var checkUpdatesButton = new Button
         {
@@ -643,14 +706,12 @@ public sealed partial class MainWindow : Window
         var cancelButton = new Button
         {
             Content = L("Settings.Cancel", "Abbrechen"),
-            MinWidth = 110,
-            MaxWidth = 130
+            MinWidth = 120
         };
         var applyButton = new Button
         {
             Content = L("Settings.Apply", "Ãœbernehmen"),
-            MinWidth = 110,
-            MaxWidth = 130
+            MinWidth = 140
         };
 
         var rightButtons = new StackPanel
@@ -664,9 +725,24 @@ public sealed partial class MainWindow : Window
 
         buttonRow.Children.Add(checkUpdatesButton);
         buttonRow.Children.Add(rightButtons);
-        Grid.SetColumn(rightButtons, 1);
-
+        if (useTwoColumns)
+        {
+            Grid.SetColumn(rightButtons, 1);
+        }
+        else
+        {
+            Grid.SetRow(rightButtons, 1);
+        }
+        var contentHost = new Grid
+        {
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            RowSpacing = 12
+        };
+        contentHost.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        contentHost.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        contentHost.Children.Add(settingsScrollViewer);
         contentHost.Children.Add(buttonRow);
+        Grid.SetRow(buttonRow, 1);
 
         var dialog = new ContentDialog
         {
@@ -674,8 +750,9 @@ public sealed partial class MainWindow : Window
             Title = L("Settings.Title", "Einstellungen"),
             Content = contentHost
         };
-        dialog.Resources["ContentDialogMaxWidth"] = 1200d;
-        dialog.Resources["ContentDialogMinWidth"] = 1000d;
+        dialog.Resources["ContentDialogMaxWidth"] = dialogWidth;
+        dialog.Resources["ContentDialogMinWidth"] = Math.Min(dialogWidth, 640d);
+        dialog.Resources["ContentDialogMaxHeight"] = dialogHeight;
 
         var apply = false;
         var runUpdateCheck = false;
@@ -743,7 +820,7 @@ public sealed partial class MainWindow : Window
         checkBox.VerticalAlignment = VerticalAlignment.Center;
 
         var row = new Grid { ColumnSpacing = 10 };
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(255) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 160 });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.Children.Add(checkBox);

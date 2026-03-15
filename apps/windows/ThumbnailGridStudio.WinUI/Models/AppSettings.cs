@@ -19,11 +19,11 @@ public sealed class AppSettings : ObservableObject
     private int _exportFormatIndex;
     private string _backgroundHex = "1F2126";
     private string _metadataHex = "FFFFFF";
-    private float _fileNameFontSize = 26f;
-    private float _durationFontSize = 14f;
-    private float _fileSizeFontSize = 14f;
-    private float _resolutionFontSize = 14f;
-    private float _timestampFontSize = 12f;
+    private float _fileNameFontSize = 22f;
+    private float _durationFontSize = 20f;
+    private float _fileSizeFontSize = 20f;
+    private float _resolutionFontSize = 20f;
+    private float _timestampFontSize = 16f;
     private bool _showFileName = true;
     private bool _showDuration = true;
     private bool _showFileSize = true;
@@ -344,21 +344,21 @@ public sealed class AppSettings : ObservableObject
         ThumbnailWidthText = snapshot.ThumbnailWidthText ?? ThumbnailWidthText;
         ThumbnailHeightText = snapshot.ThumbnailHeightText ?? ThumbnailHeightText;
         SpacingText = snapshot.SpacingText ?? SpacingText;
-        ExportFormatIndex = snapshot.ExportFormatIndex;
+        ExportFormatIndex = snapshot.ExportFormatIndex ?? ExportFormatIndex;
         BackgroundHex = snapshot.BackgroundHex ?? BackgroundHex;
         MetadataHex = snapshot.MetadataHex ?? MetadataHex;
-        FileNameFontSize = snapshot.FileNameFontSize;
-        DurationFontSize = snapshot.DurationFontSize;
-        FileSizeFontSize = snapshot.FileSizeFontSize;
-        ResolutionFontSize = snapshot.ResolutionFontSize;
-        TimestampFontSize = snapshot.TimestampFontSize;
-        ShowFileName = snapshot.ShowFileName;
-        ShowDuration = snapshot.ShowDuration;
-        ShowFileSize = snapshot.ShowFileSize;
-        ShowResolution = snapshot.ShowResolution;
-        ShowTimestamp = snapshot.ShowTimestamp;
-        ExportSeparateThumbnails = snapshot.ExportSeparateThumbnails;
-        RenderConcurrency = snapshot.RenderConcurrency;
+        FileNameFontSize = snapshot.FileNameFontSize ?? FileNameFontSize;
+        DurationFontSize = snapshot.DurationFontSize ?? DurationFontSize;
+        FileSizeFontSize = snapshot.FileSizeFontSize ?? FileSizeFontSize;
+        ResolutionFontSize = snapshot.ResolutionFontSize ?? ResolutionFontSize;
+        TimestampFontSize = snapshot.TimestampFontSize ?? TimestampFontSize;
+        ShowFileName = snapshot.ShowFileName ?? ShowFileName;
+        ShowDuration = snapshot.ShowDuration ?? ShowDuration;
+        ShowFileSize = snapshot.ShowFileSize ?? ShowFileSize;
+        ShowResolution = snapshot.ShowResolution ?? ShowResolution;
+        ShowTimestamp = snapshot.ShowTimestamp ?? ShowTimestamp;
+        ExportSeparateThumbnails = snapshot.ExportSeparateThumbnails ?? ExportSeparateThumbnails;
+        RenderConcurrency = snapshot.RenderConcurrency ?? RenderConcurrency;
     }
 
     private sealed class AppSettingsSnapshot
@@ -368,20 +368,20 @@ public sealed class AppSettings : ObservableObject
         public string? ThumbnailWidthText { get; init; }
         public string? ThumbnailHeightText { get; init; }
         public string? SpacingText { get; init; }
-        public int ExportFormatIndex { get; init; }
+        public int? ExportFormatIndex { get; init; }
         public string? BackgroundHex { get; init; }
         public string? MetadataHex { get; init; }
-        public float FileNameFontSize { get; init; }
-        public float DurationFontSize { get; init; }
-        public float FileSizeFontSize { get; init; }
-        public float ResolutionFontSize { get; init; }
-        public float TimestampFontSize { get; init; }
-        public bool ShowFileName { get; init; } = true;
-        public bool ShowDuration { get; init; } = true;
-        public bool ShowFileSize { get; init; } = true;
-        public bool ShowResolution { get; init; } = true;
-        public bool ShowTimestamp { get; init; } = true;
-        public bool ExportSeparateThumbnails { get; init; }
-        public int RenderConcurrency { get; init; } = 1;
+        public float? FileNameFontSize { get; init; }
+        public float? DurationFontSize { get; init; }
+        public float? FileSizeFontSize { get; init; }
+        public float? ResolutionFontSize { get; init; }
+        public float? TimestampFontSize { get; init; }
+        public bool? ShowFileName { get; init; }
+        public bool? ShowDuration { get; init; }
+        public bool? ShowFileSize { get; init; }
+        public bool? ShowResolution { get; init; }
+        public bool? ShowTimestamp { get; init; }
+        public bool? ExportSeparateThumbnails { get; init; }
+        public int? RenderConcurrency { get; init; }
     }
 }
