@@ -13,7 +13,7 @@
   - `%LOCALAPPDATA%\ThumbnailGridStudio\settings.json`
 - Every CLI parameter overrides the loaded setting value.
 - Input can be a file or a directory.
-- Directories are scanned recursively by default.
+- Directories are always scanned recursively.
 
 ## Usage
 
@@ -33,7 +33,6 @@ Short forms:
 |---|---|---|
 | `-i`, `--input` | `<path>` | Input video file or directory. Can be repeated. |
 | `-o`, `--output-dir` | `<dir>` | Output directory. Default: `%USERPROFILE%\Pictures\ThumbnailGridStudio\Exports` |
-| `--recursive` | `<bool>` | Recursively scan input directories. Default: `true` |
 | `--columns` | `<int>` | Number of grid columns |
 | `--rows` | `<int>` | Number of grid rows |
 | `--width` | `<int\|auto>` | Thumbnail width. `auto` allowed |
@@ -88,7 +87,6 @@ Render a directory with overrides:
 ```powershell
 ThumbnailGridStudio-cli `
   -i "D:\VideoBatch" `
-  --recursive true `
   --columns 5 `
   --rows 4 `
   --format png `

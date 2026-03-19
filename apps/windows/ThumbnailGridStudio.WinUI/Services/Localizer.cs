@@ -53,6 +53,7 @@ public static class Localizer
         ["Render.Value.Unknown"] = "unbekannt",
 
         ["View.PreviewFallbackTitle"] = "Vorschau",
+        ["View.Status.Ready"] = "Bereit",
         ["View.Status.Waiting"] = "Wartet...",
         ["View.Status.Rendering"] = "Render läuft...",
         ["View.Status.Exported"] = "Exportiert: {0}",
@@ -113,6 +114,7 @@ public static class Localizer
         ["Render.Value.Unknown"] = "unknown",
 
         ["View.PreviewFallbackTitle"] = "Preview",
+        ["View.Status.Ready"] = "Ready",
         ["View.Status.Waiting"] = "Waiting...",
         ["View.Status.Rendering"] = "Rendering...",
         ["View.Status.Exported"] = "Exported: {0}",

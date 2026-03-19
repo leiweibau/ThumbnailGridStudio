@@ -823,6 +823,7 @@ public sealed partial class MainWindow : Window
         settings.ShowAudioCodec = audioCodecVisible.IsChecked == true;
         settings.AudioCodecFontSize = ParseFontPx(audioCodecFontPx.Text, settings.AudioCodecFontSize);
         settings.RenderConcurrency = (int)Math.Round(renderConcurrency.Value);
+        ViewModel.ResetRenderedOutputs(resetSelectionToStartupPlaceholder: true);
     }
 
     private static float ParseFontPx(string text, float fallback)

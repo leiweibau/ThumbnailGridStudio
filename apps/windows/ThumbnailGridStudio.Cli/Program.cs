@@ -36,7 +36,7 @@ internal static class Program
             return 2;
         }
 
-        var inputs = ExpandInputPaths(options.InputPaths, options.RecursiveDirectoryScan);
+        var inputs = ExpandInputPaths(options.InputPaths);
         if (inputs.Count == 0)
         {
             Console.Error.WriteLine("No existing files found for the provided inputs.");
@@ -214,7 +214,7 @@ internal static class Program
             "Exports");
     }
 
-    private static List<string> ExpandInputPaths(IEnumerable<string> rawInputs, bool recursive)
+    private static List<string> ExpandInputPaths(IEnumerable<string> rawInputs)
     {
         var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -236,8 +236,7 @@ internal static class Program
             {
                 try
                 {
-                    var option = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-                    foreach (var file in Directory.EnumerateFiles(path, "*", option))
+                    foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
                     {
                         files.Add(file);
                     }
@@ -414,7 +413,6 @@ Usage:
 Options:
   -i, --input <path>            Input video file or directory (repeatable)
   -o, --output-dir <dir>        Output directory (default: %USERPROFILE%\Pictures\ThumbnailGridStudio\Exports)
-      --recursive <bool>        Scan directories recursively (default: true)
       --columns <int>
       --rows <int>
       --width <int|auto>
@@ -475,7 +473,6 @@ Notes:
         public bool ShowHelp { get; private set; }
         public List<string> InputPaths { get; } = [];
         public string? OutputDirectory { get; private set; }
-        public bool RecursiveDirectoryScan { get; private set; } = true;
         public Dictionary<string, string> Overrides { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         public static CliOptions Parse(string[] args)
@@ -504,9 +501,6 @@ Notes:
                     case "--output-dir":
                     case "--output":
                         options.OutputDirectory = ReadValue(args, ref i, arg);
-                        break;
-                    case "--recursive":
-                        options.RecursiveDirectoryScan = ParseBool(ReadValue(args, ref i, arg), "recursive");
                         break;
                     default:
                         if (!arg.StartsWith("--", StringComparison.Ordinal))

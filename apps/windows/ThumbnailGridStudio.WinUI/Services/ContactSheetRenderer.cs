@@ -87,7 +87,6 @@ public static class ContactSheetRenderer
 
     private static void DrawHeader(Graphics graphics, VideoMetadata metadata, string fileName, AppSettings settings, int leftPadding, int topY)
     {
-        var labelTitle = IsGermanUi() ? "Titel" : "Title";
         var labelDuration = IsGermanUi() ? "Dauer" : "Duration";
         var labelSize = IsGermanUi() ? "Größe" : "Size";
         var labelResolution = IsGermanUi() ? "Auflösung" : "Resolution";
@@ -110,7 +109,7 @@ public static class ContactSheetRenderer
         var y = topY;
         if (settings.ShowFileName)
         {
-            var titleText = $"{labelTitle}: {Path.GetFileName(fileName)}";
+            var titleText = Path.GetFileName(fileName);
             var titleSize = graphics.MeasureString(titleText, titleFont);
             graphics.DrawString(titleText, titleFont, titleBrush, new PointF(leftPadding, y));
             y += (int)Math.Ceiling(titleSize.Height) + 6;

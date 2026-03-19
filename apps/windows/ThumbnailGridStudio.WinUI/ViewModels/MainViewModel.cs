@@ -310,6 +310,23 @@ public sealed class MainViewModel : ObservableObject
         NotifyProgress();
     }
 
+    public void ResetRenderedOutputs(bool resetSelectionToStartupPlaceholder = false)
+    {
+        foreach (var item in Videos)
+        {
+            item.OutputPath = null;
+            item.StatusText = Localizer.Get("View.Status.Ready", "Bereit");
+        }
+
+        if (resetSelectionToStartupPlaceholder && SelectedVideo is not null)
+        {
+            SelectedVideo = null;
+            return;
+        }
+
+        TriggerPreviewRefresh();
+    }
+
     private async Task RenderSingleAsync(
         VideoItem item,
         string outputDirectory,
