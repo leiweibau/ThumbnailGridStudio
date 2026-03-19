@@ -45,11 +45,17 @@
 "settings.timestamp_font_size" = "الطابع الزمني";
 "settings.pixel_placeholder" = "الافتراضي: %d";
 "settings.auto" = "تلقائي";
-"settings.show_file_name" = "إظهار اسم الملف";
-"settings.show_duration" = "إظهار المدة";
-"settings.show_file_size" = "إظهار حجم الملف";
-"settings.show_resolution" = "إظهار الدقة";
-"settings.show_timestamp" = "إظهار الطابع الزمني";
+"settings.show_file_name" = "اسم الملف";
+"settings.show_duration" = "المدة";
+"settings.show_file_size" = "حجم الملف";
+"settings.show_resolution" = "الدقة";
+"settings.show_timestamp" = "الطابع الزمني";
+"settings.show_bitrate" = "معدل البت";
+"settings.show_video_codec" = "ترميز الفيديو";
+"settings.show_audio_codec" = "ترميز الصوت";
+"settings.bitrate_font_size" = "معدل البت";
+"settings.video_codec_font_size" = "ترميز الفيديو";
+"settings.audio_codec_font_size" = "ترميز الصوت";
 "settings.export_separate_thumbnails" = "تصدير الصور المصغرة بشكل منفصل";
 
 "sidebar.videos" = "الفيديوهات";
@@ -78,3 +84,10 @@
 "update.up_to_date_message" = "أنت تستخدم بالفعل أحدث إصدار (%@).";
 "update.error_title" = "فشل التحقق من التحديث";
 "update.error_message" = "تعذر إكمال التحقق من التحديث:\n%@";
+"metadata.label.duration" = "المدة";
+"metadata.label.size" = "الحجم";
+"metadata.label.resolution" = "الدقة";
+"metadata.label.bitrate" = "معدل البت";
+"metadata.label.video" = "فيديو";
+"metadata.label.audio" = "صوت";
+"metadata.unknown_value" = "غير معروف";

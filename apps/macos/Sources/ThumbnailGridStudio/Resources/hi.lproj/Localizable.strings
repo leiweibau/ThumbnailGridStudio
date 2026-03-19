@@ -45,11 +45,17 @@
 "settings.timestamp_font_size" = "टाइमस्टैम्प";
 "settings.pixel_placeholder" = "डिफ़ॉल्ट: %d";
 "settings.auto" = "ऑटो";
-"settings.show_file_name" = "फ़ाइल नाम दिखाएँ";
-"settings.show_duration" = "अवधि दिखाएँ";
-"settings.show_file_size" = "फ़ाइल आकार दिखाएँ";
-"settings.show_resolution" = "रिज़ॉल्यूशन दिखाएँ";
-"settings.show_timestamp" = "टाइमस्टैम्प दिखाएँ";
+"settings.show_file_name" = "फ़ाइल नाम";
+"settings.show_duration" = "अवधि";
+"settings.show_file_size" = "फ़ाइल आकार";
+"settings.show_resolution" = "रिज़ॉल्यूशन";
+"settings.show_timestamp" = "टाइमस्टैम्प";
+"settings.show_bitrate" = "बिटरेट";
+"settings.show_video_codec" = "वीडियो कोडेक";
+"settings.show_audio_codec" = "ऑडियो कोडेक";
+"settings.bitrate_font_size" = "बिटरेट";
+"settings.video_codec_font_size" = "वीडियो कोडेक";
+"settings.audio_codec_font_size" = "ऑडियो कोडेक";
 "settings.export_separate_thumbnails" = "थंबनेल अलग से निर्यात करें";
 
 "sidebar.videos" = "वीडियो";
@@ -78,3 +84,10 @@
 "update.up_to_date_message" = "आप पहले से नवीनतम संस्करण (%@) का उपयोग कर रहे हैं।";
 "update.error_title" = "अपडेट जाँच असफल";
 "update.error_message" = "अपडेट जाँच पूरी नहीं हो सकी:\n%@";
+"metadata.label.duration" = "अवधि";
+"metadata.label.size" = "आकार";
+"metadata.label.resolution" = "रिज़ॉल्यूशन";
+"metadata.label.bitrate" = "बिटरेट";
+"metadata.label.video" = "वीडियो";
+"metadata.label.audio" = "ऑडियो";
+"metadata.unknown_value" = "अज्ञात";

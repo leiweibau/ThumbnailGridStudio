@@ -5,11 +5,17 @@ import Foundation
 
 struct VideoMetadata {
     let fileSize: Int64
+    let bitrateBitsPerSecond: Int64
+    let videoCodec: String
+    let audioCodecs: [String]
 }
 
 struct VideoRenderMetadata {
     let duration: TimeInterval
     let resolution: CGSize
+    let bitrateBitsPerSecond: Int64
+    let videoCodec: String
+    let audioCodecs: [String]
 }
 
 struct ThumbnailFrame {
@@ -43,9 +49,12 @@ enum VideoProcessingService {
     static func loadMetadata(for url: URL) async throws -> VideoMetadata {
         let values = try url.resourceValues(forKeys: [.fileSizeKey])
         let bytes = Int64(values.fileSize ?? 0)
-        _ = try loadRenderMetadataWithFFmpeg(for: url)
+        let renderMetadata = try loadRenderMetadataWithFFmpeg(for: url)
         return VideoMetadata(
-            fileSize: bytes
+            fileSize: bytes,
+            bitrateBitsPerSecond: renderMetadata.bitrateBitsPerSecond,
+            videoCodec: renderMetadata.videoCodec,
+            audioCodecs: renderMetadata.audioCodecs
         )
     }
 
@@ -59,10 +68,27 @@ enum VideoProcessingService {
             let duration = try await asset.load(.duration)
             let tracks = try await asset.loadTracks(withMediaType: .video)
             let resolution = try await resolvedVideoSize(from: tracks.first)
-            return VideoRenderMetadata(
+            let avFoundationMetadata = VideoRenderMetadata(
                 duration: duration.seconds.isFinite ? duration.seconds : 0,
-                resolution: resolution
+                resolution: resolution,
+                bitrateBitsPerSecond: 0,
+                videoCodec: "",
+                audioCodecs: []
             )
+
+            // AVFoundation is fine for duration/resolution, but codec and bitrate
+            // metadata still need ffprobe for parity with the Windows app.
+            if let ffmpegMetadata = try? loadRenderMetadataWithFFmpeg(for: url) {
+                return VideoRenderMetadata(
+                    duration: avFoundationMetadata.duration > 0 ? avFoundationMetadata.duration : ffmpegMetadata.duration,
+                    resolution: avFoundationMetadata.resolution == .zero ? ffmpegMetadata.resolution : avFoundationMetadata.resolution,
+                    bitrateBitsPerSecond: ffmpegMetadata.bitrateBitsPerSecond,
+                    videoCodec: ffmpegMetadata.videoCodec,
+                    audioCodecs: ffmpegMetadata.audioCodecs
+                )
+            }
+
+            return avFoundationMetadata
         } catch {
             return try loadRenderMetadataWithFFmpeg(for: url)
         }
@@ -145,8 +171,7 @@ enum VideoProcessingService {
     private static func loadRenderMetadataWithFFmpeg(for url: URL) throws -> VideoRenderMetadata {
         let data = try runTool("ffprobe", arguments: [
             "-v", "error",
-            "-select_streams", "v:0",
-            "-show_entries", "stream=codec_type,width,height,duration:format=duration,format_name",
+            "-show_entries", "stream=codec_type,codec_name,width,height,duration,bit_rate:stream_tags=language:format=duration,format_name,bit_rate",
             "-of", "json",
             url.path
         ])
@@ -175,9 +200,22 @@ enum VideoProcessingService {
             throw VideoProcessingError.unreadableVideo
         }
 
+        let bitrate = max(
+            parseBitrateBitsPerSecond(response.format?.bitRate),
+            parseBitrateBitsPerSecond(stream.bitRate)
+        )
+        let videoCodec = normalizedCodecName(stream.codecName)
+        let audioCodecs = response.streams
+            .filter { $0.codecType == "audio" }
+            .map { formatAudioCodecEntry(codec: $0.codecName, language: $0.tags?.language, bitrateBitsPerSecond: parseBitrateBitsPerSecond($0.bitRate)) }
+            .filter { !$0.isEmpty }
+
         return VideoRenderMetadata(
             duration: duration,
-            resolution: CGSize(width: width, height: height)
+            resolution: CGSize(width: width, height: height),
+            bitrateBitsPerSecond: bitrate,
+            videoCodec: videoCodec,
+            audioCodecs: audioCodecs
         )
     }
 
@@ -202,14 +240,16 @@ enum VideoProcessingService {
         let scaleFilter = "scale=w=\(width):h=\(height):force_original_aspect_ratio=decrease"
 
         for (index, timestamp) in timestamps.enumerated() {
-            let outputURL = tempDirectory.appendingPathComponent("thumb-\(index).png")
+            let outputURL = tempDirectory.appendingPathComponent("thumb-\(index).bmp")
             _ = try runTool("ffmpeg", arguments: [
                 "-y",
                 "-loglevel", "error",
+                "-nostdin",
                 "-ss", String(format: "%.3f", timestamp),
                 "-i", url.path,
                 "-frames:v", "1",
                 "-vf", scaleFilter,
+                "-c:v", "bmp",
                 outputURL.path
             ])
 
@@ -297,30 +337,74 @@ enum VideoProcessingService {
         return ProcessInfo.processInfo.machineArchitectureName
         #endif
     }
+
+    private static func parseBitrateBitsPerSecond(_ value: String?) -> Int64 {
+        guard let value, let parsed = Int64(value), parsed > 0 else { return 0 }
+        return parsed
+    }
+
+    private static func normalizedCodecName(_ value: String?) -> String {
+        value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    private static func normalizedLanguageCode(_ value: String?) -> String {
+        guard let value else { return "" }
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalized.isEmpty, normalized != "und" else { return "" }
+        return normalized
+    }
+
+    private static func formatCompactBitrate(_ bitrateBitsPerSecond: Int64) -> String {
+        guard bitrateBitsPerSecond > 0 else { return "" }
+        let kbps = Double(bitrateBitsPerSecond) / 1000
+        return kbps >= 1000 ? String(format: "%.2f Mbps", kbps / 1000) : String(format: "%.0f kbps", kbps)
+    }
+
+    private static func formatAudioCodecEntry(codec: String?, language: String?, bitrateBitsPerSecond: Int64) -> String {
+        let normalizedCodec = normalizedCodecName(codec)
+        let normalizedLanguage = normalizedLanguageCode(language)
+        let normalizedBitrate = formatCompactBitrate(bitrateBitsPerSecond)
+        guard !normalizedCodec.isEmpty else { return "" }
+        let details = [normalizedLanguage, normalizedBitrate].filter { !$0.isEmpty }
+        guard !details.isEmpty else { return normalizedCodec }
+        return "\(normalizedCodec) (\(details.joined(separator: ", ")))"
+    }
 }
 
 private struct FFprobeResponse: Decodable {
     struct Stream: Decodable {
         let codecType: String?
+        let codecName: String?
         let width: Double?
         let height: Double?
         let duration: String?
+        let bitRate: String?
+        let tags: Tags?
+
+        struct Tags: Decodable {
+            let language: String?
+        }
 
         enum CodingKeys: String, CodingKey {
             case codecType = "codec_type"
+            case codecName = "codec_name"
             case width
             case height
             case duration
+            case bitRate = "bit_rate"
+            case tags
         }
     }
 
     struct Format: Decodable {
         let duration: String?
         let formatName: String?
+        let bitRate: String?
 
         enum CodingKeys: String, CodingKey {
             case duration
             case formatName = "format_name"
+            case bitRate = "bit_rate"
         }
     }
 

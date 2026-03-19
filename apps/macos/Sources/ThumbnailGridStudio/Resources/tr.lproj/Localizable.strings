@@ -45,11 +45,17 @@
 "settings.timestamp_font_size" = "Zaman damgası";
 "settings.pixel_placeholder" = "Varsayılan: %d";
 "settings.auto" = "otomatik";
-"settings.show_file_name" = "Dosya adını göster";
-"settings.show_duration" = "Süreyi göster";
-"settings.show_file_size" = "Dosya boyutunu göster";
-"settings.show_resolution" = "Çözünürlüğü göster";
-"settings.show_timestamp" = "Zaman damgasını göster";
+"settings.show_file_name" = "Dosya adı";
+"settings.show_duration" = "Süre";
+"settings.show_file_size" = "Dosya boyutu";
+"settings.show_resolution" = "Çözünürlük";
+"settings.show_timestamp" = "Zaman damgası";
+"settings.show_bitrate" = "Bit hızı";
+"settings.show_video_codec" = "Video kodeği";
+"settings.show_audio_codec" = "Ses kodeği";
+"settings.bitrate_font_size" = "Bit hızı";
+"settings.video_codec_font_size" = "Video kodeği";
+"settings.audio_codec_font_size" = "Ses kodeği";
 "settings.export_separate_thumbnails" = "Küçük resimleri ayrı dışa aktar";
 
 "sidebar.videos" = "Videolar";
@@ -78,3 +84,10 @@
 "update.up_to_date_message" = "Zaten en son sürümü (%@) kullanıyorsunuz.";
 "update.error_title" = "Güncelleme denetimi başarısız";
 "update.error_message" = "Güncelleme denetimi tamamlanamadı:\n%@";
+"metadata.label.duration" = "Süre";
+"metadata.label.size" = "Boyut";
+"metadata.label.resolution" = "Çözünürlük";
+"metadata.label.bitrate" = "Bit hızı";
+"metadata.label.video" = "Video";
+"metadata.label.audio" = "Ses";
+"metadata.unknown_value" = "bilinmiyor";

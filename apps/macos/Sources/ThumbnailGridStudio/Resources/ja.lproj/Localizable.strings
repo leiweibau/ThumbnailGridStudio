@@ -45,11 +45,17 @@
 "settings.timestamp_font_size" = "タイムスタンプ";
 "settings.pixel_placeholder" = "既定値: %d";
 "settings.auto" = "自動";
-"settings.show_file_name" = "ファイル名を表示";
-"settings.show_duration" = "再生時間を表示";
-"settings.show_file_size" = "ファイルサイズを表示";
-"settings.show_resolution" = "解像度を表示";
-"settings.show_timestamp" = "タイムスタンプを表示";
+"settings.show_file_name" = "ファイル名";
+"settings.show_duration" = "再生時間";
+"settings.show_file_size" = "ファイルサイズ";
+"settings.show_resolution" = "解像度";
+"settings.show_timestamp" = "タイムスタンプ";
+"settings.show_bitrate" = "ビットレート";
+"settings.show_video_codec" = "ビデオコーデック";
+"settings.show_audio_codec" = "オーディオコーデック";
+"settings.bitrate_font_size" = "ビットレート";
+"settings.video_codec_font_size" = "ビデオコーデック";
+"settings.audio_codec_font_size" = "オーディオコーデック";
 "settings.export_separate_thumbnails" = "サムネイルを個別に書き出す";
 
 "sidebar.videos" = "動画";
@@ -78,3 +84,10 @@
 "update.up_to_date_message" = "すでに最新バージョン（%@）を使用しています。";
 "update.error_title" = "アップデート確認に失敗しました";
 "update.error_message" = "アップデート確認を完了できませんでした:\n%@";
+"metadata.label.duration" = "再生時間";
+"metadata.label.size" = "サイズ";
+"metadata.label.resolution" = "解像度";
+"metadata.label.bitrate" = "ビットレート";
+"metadata.label.video" = "ビデオ";
+"metadata.label.audio" = "オーディオ";
+"metadata.unknown_value" = "不明";

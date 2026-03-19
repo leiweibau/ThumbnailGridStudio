@@ -24,10 +24,13 @@ final class AppSettings: ObservableObject {
     static let defaultThumbnailHeight: CGFloat = 180
     static let defaultThumbnailSpacing: Double = 16
     static let defaultFileNameFontSize: CGFloat = 26
-    static let defaultDurationFontSize: CGFloat = 14
-    static let defaultFileSizeFontSize: CGFloat = 14
-    static let defaultResolutionFontSize: CGFloat = 14
+    static let defaultDurationFontSize: CGFloat = 18
+    static let defaultFileSizeFontSize: CGFloat = 18
+    static let defaultResolutionFontSize: CGFloat = 18
     static let defaultTimestampFontSize: CGFloat = 12
+    static let defaultBitrateFontSize: CGFloat = 18
+    static let defaultVideoCodecFontSize: CGFloat = 16
+    static let defaultAudioCodecFontSize: CGFloat = 16
     static let defaultRenderConcurrency: Int = 2
 
     @Published var columns: Int { didSet { defaults.set(columns, forKey: Keys.columns) } }
@@ -48,12 +51,18 @@ final class AppSettings: ObservableObject {
     @Published var showFileSize: Bool { didSet { defaults.set(showFileSize, forKey: Keys.showFileSize) } }
     @Published var showResolution: Bool { didSet { defaults.set(showResolution, forKey: Keys.showResolution) } }
     @Published var showTimestamp: Bool { didSet { defaults.set(showTimestamp, forKey: Keys.showTimestamp) } }
+    @Published var showBitrate: Bool { didSet { defaults.set(showBitrate, forKey: Keys.showBitrate) } }
+    @Published var showVideoCodec: Bool { didSet { defaults.set(showVideoCodec, forKey: Keys.showVideoCodec) } }
+    @Published var showAudioCodec: Bool { didSet { defaults.set(showAudioCodec, forKey: Keys.showAudioCodec) } }
     @Published var exportSeparateThumbnails: Bool { didSet { defaults.set(exportSeparateThumbnails, forKey: Keys.exportSeparateThumbnails) } }
     @Published var fileNameFontSizeText: String { didSet { defaults.set(fileNameFontSizeText, forKey: Keys.fileNameFontSizeText) } }
     @Published var durationFontSizeText: String { didSet { defaults.set(durationFontSizeText, forKey: Keys.durationFontSizeText) } }
     @Published var fileSizeFontSizeText: String { didSet { defaults.set(fileSizeFontSizeText, forKey: Keys.fileSizeFontSizeText) } }
     @Published var resolutionFontSizeText: String { didSet { defaults.set(resolutionFontSizeText, forKey: Keys.resolutionFontSizeText) } }
     @Published var timestampFontSizeText: String { didSet { defaults.set(timestampFontSizeText, forKey: Keys.timestampFontSizeText) } }
+    @Published var bitrateFontSizeText: String { didSet { defaults.set(bitrateFontSizeText, forKey: Keys.bitrateFontSizeText) } }
+    @Published var videoCodecFontSizeText: String { didSet { defaults.set(videoCodecFontSizeText, forKey: Keys.videoCodecFontSizeText) } }
+    @Published var audioCodecFontSizeText: String { didSet { defaults.set(audioCodecFontSizeText, forKey: Keys.audioCodecFontSizeText) } }
 
     private let defaults: UserDefaults
 
@@ -76,12 +85,18 @@ final class AppSettings: ObservableObject {
         static let showFileSize = "settings.showFileSize"
         static let showResolution = "settings.showResolution"
         static let showTimestamp = "settings.showTimestamp"
+        static let showBitrate = "settings.showBitrate"
+        static let showVideoCodec = "settings.showVideoCodec"
+        static let showAudioCodec = "settings.showAudioCodec"
         static let exportSeparateThumbnails = "settings.exportSeparateThumbnails"
         static let fileNameFontSizeText = "settings.fileNameFontSizeText"
         static let durationFontSizeText = "settings.durationFontSizeText"
         static let fileSizeFontSizeText = "settings.fileSizeFontSizeText"
         static let resolutionFontSizeText = "settings.resolutionFontSizeText"
         static let timestampFontSizeText = "settings.timestampFontSizeText"
+        static let bitrateFontSizeText = "settings.bitrateFontSizeText"
+        static let videoCodecFontSizeText = "settings.videoCodecFontSizeText"
+        static let audioCodecFontSizeText = "settings.audioCodecFontSizeText"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -104,12 +119,18 @@ final class AppSettings: ObservableObject {
         self.showFileSize = defaults.object(forKey: Keys.showFileSize) as? Bool ?? true
         self.showResolution = defaults.object(forKey: Keys.showResolution) as? Bool ?? true
         self.showTimestamp = defaults.object(forKey: Keys.showTimestamp) as? Bool ?? true
+        self.showBitrate = defaults.object(forKey: Keys.showBitrate) as? Bool ?? true
+        self.showVideoCodec = defaults.object(forKey: Keys.showVideoCodec) as? Bool ?? true
+        self.showAudioCodec = defaults.object(forKey: Keys.showAudioCodec) as? Bool ?? true
         self.exportSeparateThumbnails = defaults.object(forKey: Keys.exportSeparateThumbnails) as? Bool ?? false
         self.fileNameFontSizeText = defaults.string(forKey: Keys.fileNameFontSizeText) ?? "\(Int(Self.defaultFileNameFontSize))"
         self.durationFontSizeText = defaults.string(forKey: Keys.durationFontSizeText) ?? "\(Int(Self.defaultDurationFontSize))"
         self.fileSizeFontSizeText = defaults.string(forKey: Keys.fileSizeFontSizeText) ?? "\(Int(Self.defaultFileSizeFontSize))"
         self.resolutionFontSizeText = defaults.string(forKey: Keys.resolutionFontSizeText) ?? "\(Int(Self.defaultResolutionFontSize))"
         self.timestampFontSizeText = defaults.string(forKey: Keys.timestampFontSizeText) ?? "\(Int(Self.defaultTimestampFontSize))"
+        self.bitrateFontSizeText = defaults.string(forKey: Keys.bitrateFontSizeText) ?? "\(Int(Self.defaultBitrateFontSize))"
+        self.videoCodecFontSizeText = defaults.string(forKey: Keys.videoCodecFontSizeText) ?? "\(Int(Self.defaultVideoCodecFontSize))"
+        self.audioCodecFontSizeText = defaults.string(forKey: Keys.audioCodecFontSizeText) ?? "\(Int(Self.defaultAudioCodecFontSize))"
     }
 
     var backgroundColor: Color {
@@ -158,12 +179,18 @@ final class AppSettings: ObservableObject {
             showFileSize ? "1" : "0",
             showResolution ? "1" : "0",
             showTimestamp ? "1" : "0",
+            showBitrate ? "1" : "0",
+            showVideoCodec ? "1" : "0",
+            showAudioCodec ? "1" : "0",
             exportSeparateThumbnails ? "1" : "0",
             fileNameFontSizeText,
             durationFontSizeText,
             fileSizeFontSizeText,
             resolutionFontSizeText,
-            timestampFontSizeText
+            timestampFontSizeText,
+            bitrateFontSizeText,
+            videoCodecFontSizeText,
+            audioCodecFontSizeText
         ].joined(separator: "-")
     }
 
@@ -246,6 +273,18 @@ final class AppSettings: ObservableObject {
 
     var resolvedTimestampFontSize: CGFloat {
         resolvedFontSize(from: timestampFontSizeText, defaultValue: Self.defaultTimestampFontSize)
+    }
+
+    var resolvedBitrateFontSize: CGFloat {
+        resolvedFontSize(from: bitrateFontSizeText, defaultValue: Self.defaultBitrateFontSize)
+    }
+
+    var resolvedVideoCodecFontSize: CGFloat {
+        resolvedFontSize(from: videoCodecFontSizeText, defaultValue: Self.defaultVideoCodecFontSize)
+    }
+
+    var resolvedAudioCodecFontSize: CGFloat {
+        resolvedFontSize(from: audioCodecFontSizeText, defaultValue: Self.defaultAudioCodecFontSize)
     }
 
     private func resolvedFontSize(from text: String, defaultValue: CGFloat) -> CGFloat {

@@ -7,7 +7,9 @@ ARM_BUILD_DIR="$ROOT_DIR/.build/arm64-apple-macosx/release"
 EXECUTABLE_NAME="ThumbnailGridStudio"
 CLI_EXECUTABLE_NAME="thumbnail-grid-studio-cli"
 APP_BUNDLE_NAME="Thumbnail Grid Studio"
+APP_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT_DIR/Resources/Info.plist")"
 APP_DIR="$ROOT_DIR/dist/$APP_BUNDLE_NAME.app"
+ZIP_PATH="$ROOT_DIR/dist/ThumbnailGridStudio-$APP_VERSION-macOS-universal.zip"
 CONTENTS_DIR="$APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
@@ -95,4 +97,8 @@ for tool in ffmpeg ffprobe; do
   fi
 done
 
+rm -f "$ZIP_PATH"
+ditto -c -k --sequesterRsrc --keepParent "$APP_DIR" "$ZIP_PATH"
+
 echo "Created $APP_DIR"
+echo "Created $ZIP_PATH"

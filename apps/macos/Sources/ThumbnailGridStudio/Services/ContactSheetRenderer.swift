@@ -7,6 +7,9 @@ struct ContactSheetMetadataVisibility {
     let showFileSize: Bool
     let showResolution: Bool
     let showTimestamp: Bool
+    let showBitrate: Bool
+    let showVideoCodec: Bool
+    let showAudioCodec: Bool
 }
 
 struct ContactSheetRenderOptions {
@@ -21,10 +24,14 @@ struct ContactSheetRenderOptions {
     let fileSizeFontSize: CGFloat
     let resolutionFontSize: CGFloat
     let timestampFontSize: CGFloat
+    let bitrateFontSize: CGFloat
+    let videoCodecFontSize: CGFloat
+    let audioCodecFontSize: CGFloat
     let metadataVisibility: ContactSheetMetadataVisibility
 }
 
 enum ContactSheetRenderer {
+    private static let metadataLeftColumnWidth: CGFloat = 280
     private static let placeholderBackgroundDarkImage: NSImage? = {
         guard let url = Bundle.module.url(forResource: "prev_background_dark", withExtension: "png") else {
             return nil
@@ -43,12 +50,18 @@ enum ContactSheetRenderer {
         durationText: String,
         resolutionText: String,
         fileSizeText: String,
+        bitrateText: String,
+        videoCodecText: String,
+        audioCodecTexts: [String],
         thumbnails: [ThumbnailFrame],
         options: ContactSheetRenderOptions
     ) -> NSImage {
         let horizontalPadding: CGFloat = 28
         let verticalPadding: CGFloat = 28
-        let headerHeight = calculatedHeaderHeight(for: options)
+        let headerHeight = calculatedHeaderHeight(
+            for: options,
+            audioCodecLineCount: options.metadataVisibility.showAudioCodec ? max(audioCodecTexts.count, 1) : 0
+        )
         let gridWidth =
             CGFloat(options.columns) * options.thumbnailSize.width +
             CGFloat(max(options.columns - 1, 0)) * options.spacing
@@ -87,6 +100,26 @@ enum ContactSheetRenderer {
             .font: NSFont.systemFont(ofSize: options.resolutionFontSize, weight: .medium),
             .foregroundColor: secondaryColor
         ]
+        let bitrateAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.bitrateFontSize, weight: .medium),
+            .foregroundColor: secondaryColor
+        ]
+        let videoCodecAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.videoCodecFontSize, weight: .medium),
+            .foregroundColor: secondaryColor
+        ]
+        let audioCodecAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.audioCodecFontSize, weight: .medium),
+            .foregroundColor: secondaryColor
+        ]
+
+        let labelDuration = AppStrings.metadataLabelDuration
+        let labelSize = AppStrings.metadataLabelSize
+        let labelResolution = AppStrings.metadataLabelResolution
+        let labelBitrate = AppStrings.metadataLabelBitrate
+        let labelVideo = AppStrings.metadataLabelVideo
+        let labelAudio = AppStrings.metadataLabelAudio
+        let unknownValue = AppStrings.metadataUnknownValue
 
         var currentY = canvasSize.height - verticalPadding
 
@@ -102,34 +135,100 @@ enum ContactSheetRenderer {
             currentY -= lineHeight + 6
         }
 
-        let primaryMetadata = primaryMetadataString(
-            durationText: options.metadataVisibility.showDuration ? durationText : nil,
-            fileSizeText: options.metadataVisibility.showFileSize ? fileSizeText : nil,
-            durationAttributes: durationAttributes,
-            fileSizeAttributes: fileSizeAttributes
+        let topLeftText = options.metadataVisibility.showDuration ? "\(labelDuration): \(durationText)" : nil
+        let topRightText = options.metadataVisibility.showFileSize ? "\(labelSize): \(fileSizeText)" : nil
+        let bottomLeftText = options.metadataVisibility.showResolution ? "\(labelResolution): \(resolutionText)" : nil
+        let bottomRightText = options.metadataVisibility.showBitrate ? "\(labelBitrate): \(bitrateText)" : nil
+        let metadataColumnGap: CGFloat = 50
+        let sharedRightColumnXOffset = sharedRightColumnOffset(
+            leftColumnWidth: metadataLeftColumnWidth,
+            gap: metadataColumnGap
         )
 
-        if primaryMetadata.length > 0 {
-            let lineHeight = max(lineHeight(for: durationAttributes), lineHeight(for: fileSizeAttributes))
-            let metaRect = NSRect(
-                x: horizontalPadding,
-                y: currentY - lineHeight,
-                width: canvasSize.width - horizontalPadding * 2,
-                height: lineHeight
+        let topMetadataLine = metadataColumns(
+            leftText: topLeftText,
+            rightText: topRightText,
+            leftAttributes: durationAttributes,
+            rightAttributes: fileSizeAttributes,
+            rightColumnXOffset: sharedRightColumnXOffset
+        )
+        if let leftLine = topMetadataLine.leftLine {
+            leftLine.draw(
+                in: NSRect(
+                    x: horizontalPadding,
+                    y: currentY - topMetadataLine.lineHeight,
+                    width: metadataLeftColumnWidth,
+                    height: topMetadataLine.lineHeight
+                )
             )
-            primaryMetadata.draw(in: metaRect)
+        }
+        if let rightLine = topMetadataLine.rightLine {
+            rightLine.draw(
+                in: NSRect(
+                    x: horizontalPadding + topMetadataLine.rightColumnXOffset,
+                    y: currentY - topMetadataLine.lineHeight,
+                    width: canvasSize.width - horizontalPadding * 2 - topMetadataLine.rightColumnXOffset,
+                    height: topMetadataLine.lineHeight
+                )
+            )
+        }
+        if topMetadataLine.hasContent {
+            currentY -= topMetadataLine.lineHeight + 4
+        }
+
+        let bottomMetadataLine = metadataColumns(
+            leftText: bottomLeftText,
+            rightText: bottomRightText,
+            leftAttributes: resolutionAttributes,
+            rightAttributes: bitrateAttributes,
+            rightColumnXOffset: sharedRightColumnXOffset
+        )
+        if let leftLine = bottomMetadataLine.leftLine {
+            leftLine.draw(
+                in: NSRect(
+                    x: horizontalPadding,
+                    y: currentY - bottomMetadataLine.lineHeight,
+                    width: metadataLeftColumnWidth,
+                    height: bottomMetadataLine.lineHeight
+                )
+            )
+        }
+        if let rightLine = bottomMetadataLine.rightLine {
+            rightLine.draw(
+                in: NSRect(
+                    x: horizontalPadding + bottomMetadataLine.rightColumnXOffset,
+                    y: currentY - bottomMetadataLine.lineHeight,
+                    width: canvasSize.width - horizontalPadding * 2 - bottomMetadataLine.rightColumnXOffset,
+                    height: bottomMetadataLine.lineHeight
+                )
+            )
+        }
+        if bottomMetadataLine.hasContent {
+            currentY -= bottomMetadataLine.lineHeight + 4
+        }
+
+        if options.metadataVisibility.showVideoCodec {
+            let lineHeight = lineHeight(for: videoCodecAttributes)
+            let value = videoCodecText.isEmpty ? unknownValue : videoCodecText
+            let line = "\(labelVideo): \(value)"
+            line.draw(
+                in: NSRect(x: horizontalPadding, y: currentY - lineHeight, width: canvasSize.width - horizontalPadding * 2, height: lineHeight),
+                withAttributes: videoCodecAttributes
+            )
             currentY -= lineHeight + 4
         }
 
-        if options.metadataVisibility.showResolution {
-            let lineHeight = lineHeight(for: resolutionAttributes)
-            let detailRect = NSRect(
-                x: horizontalPadding,
-                y: currentY - lineHeight,
-                width: canvasSize.width - horizontalPadding * 2,
-                height: lineHeight
-            )
-            resolutionText.draw(in: detailRect, withAttributes: resolutionAttributes)
+        if options.metadataVisibility.showAudioCodec {
+            let codecs = audioCodecTexts.isEmpty ? [unknownValue] : audioCodecTexts
+            let lineHeight = lineHeight(for: audioCodecAttributes)
+            for codec in codecs {
+                let line = "\(labelAudio): \(codec)"
+                line.draw(
+                    in: NSRect(x: horizontalPadding, y: currentY - lineHeight, width: canvasSize.width - horizontalPadding * 2, height: lineHeight),
+                    withAttributes: audioCodecAttributes
+                )
+                currentY -= lineHeight + 4
+            }
         }
 
         for row in 0..<options.rows {
@@ -163,6 +262,9 @@ enum ContactSheetRenderer {
         durationText: String,
         resolutionText: String,
         fileSizeText: String,
+        bitrateText: String,
+        videoCodecText: String,
+        audioCodecTexts: [String],
         options: ContactSheetRenderOptions
     ) -> NSImage {
         let placeholderThumbnails = (0..<(options.columns * options.rows)).map { index in
@@ -177,6 +279,9 @@ enum ContactSheetRenderer {
             durationText: durationText,
             resolutionText: resolutionText,
             fileSizeText: fileSizeText,
+            bitrateText: bitrateText,
+            videoCodecText: videoCodecText,
+            audioCodecTexts: audioCodecTexts,
             thumbnails: placeholderThumbnails,
             options: options
         )
@@ -247,7 +352,7 @@ enum ContactSheetRenderer {
         return String(format: "%02d:%02d", minutes, secs)
     }
 
-    private static func calculatedHeaderHeight(for options: ContactSheetRenderOptions) -> CGFloat {
+    private static func calculatedHeaderHeight(for options: ContactSheetRenderOptions, audioCodecLineCount: Int) -> CGFloat {
         let titleAttributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: options.fileNameFontSize, weight: .semibold)
         ]
@@ -260,38 +365,53 @@ enum ContactSheetRenderer {
         let resolutionAttributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: options.resolutionFontSize, weight: .medium)
         ]
+        let bitrateAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.bitrateFontSize, weight: .medium)
+        ]
+        let videoCodecAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.videoCodecFontSize, weight: .medium)
+        ]
+        let audioCodecAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.audioCodecFontSize, weight: .medium)
+        ]
 
         var height: CGFloat = 18
         if options.metadataVisibility.showFileName { height += lineHeight(for: titleAttributes) + 10 }
         if options.metadataVisibility.showDuration || options.metadataVisibility.showFileSize {
-            height += max(lineHeight(for: durationAttributes), lineHeight(for: fileSizeAttributes)) + 8
+            height += max(lineHeight(for: durationAttributes), lineHeight(for: fileSizeAttributes)) + 6
         }
-        if options.metadataVisibility.showResolution { height += lineHeight(for: resolutionAttributes) + 6 }
+        if options.metadataVisibility.showResolution || options.metadataVisibility.showBitrate {
+            height += max(lineHeight(for: resolutionAttributes), lineHeight(for: bitrateAttributes)) + 6
+        }
+        if options.metadataVisibility.showVideoCodec {
+            height += lineHeight(for: videoCodecAttributes) + 6
+        }
+        if options.metadataVisibility.showAudioCodec {
+            height += CGFloat(max(audioCodecLineCount, 1)) * (lineHeight(for: audioCodecAttributes) + 6)
+        }
         return max(height, 18)
     }
 
-    private static func primaryMetadataString(
-        durationText: String?,
-        fileSizeText: String?,
-        durationAttributes: [NSAttributedString.Key: Any],
-        fileSizeAttributes: [NSAttributedString.Key: Any]
-    ) -> NSAttributedString {
-        let result = NSMutableAttributedString()
+    private static func metadataColumns(
+        leftText: String?,
+        rightText: String?,
+        leftAttributes: [NSAttributedString.Key: Any],
+        rightAttributes: [NSAttributedString.Key: Any],
+        rightColumnXOffset: CGFloat
+    ) -> (leftLine: NSAttributedString?, rightLine: NSAttributedString?, leftColumnWidth: CGFloat, rightColumnXOffset: CGFloat, lineHeight: CGFloat, hasContent: Bool) {
+        let leftLine = leftText.map { NSAttributedString(string: $0, attributes: leftAttributes) }
+        let rightLine = rightText.map { NSAttributedString(string: $0, attributes: rightAttributes) }
+        let leftWidth = leftText.map { ceil(($0 as NSString).size(withAttributes: leftAttributes).width) } ?? 0
+        let rightOffset = rightLine != nil ? rightColumnXOffset : 0
+        let lineHeight = max(lineHeight(for: leftAttributes), lineHeight(for: rightAttributes))
+        return (leftLine, rightLine, leftWidth, rightOffset, lineHeight, leftLine != nil || rightLine != nil)
+    }
 
-        if let durationText {
-            result.append(NSAttributedString(string: durationText, attributes: durationAttributes))
-        }
-
-        if durationText != nil, fileSizeText != nil {
-            let separatorAttributes = durationAttributes.merging(fileSizeAttributes) { current, _ in current }
-            result.append(NSAttributedString(string: "  •  ", attributes: separatorAttributes))
-        }
-
-        if let fileSizeText {
-            result.append(NSAttributedString(string: fileSizeText, attributes: fileSizeAttributes))
-        }
-
-        return result
+    private static func sharedRightColumnOffset(
+        leftColumnWidth: CGFloat,
+        gap: CGFloat
+    ) -> CGFloat {
+        leftColumnWidth + gap
     }
 
     private static func lineHeight(for attributes: [NSAttributedString.Key: Any]) -> CGFloat {

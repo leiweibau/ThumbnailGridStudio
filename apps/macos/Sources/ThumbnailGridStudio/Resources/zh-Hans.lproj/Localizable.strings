@@ -45,11 +45,17 @@
 "settings.timestamp_font_size" = "时间戳";
 "settings.pixel_placeholder" = "默认：%d";
 "settings.auto" = "自动";
-"settings.show_file_name" = "显示文件名";
-"settings.show_duration" = "显示时长";
-"settings.show_file_size" = "显示文件大小";
-"settings.show_resolution" = "显示分辨率";
-"settings.show_timestamp" = "显示时间戳";
+"settings.show_file_name" = "文件名";
+"settings.show_duration" = "时长";
+"settings.show_file_size" = "文件大小";
+"settings.show_resolution" = "分辨率";
+"settings.show_timestamp" = "时间戳";
+"settings.show_bitrate" = "比特率";
+"settings.show_video_codec" = "视频编解码器";
+"settings.show_audio_codec" = "音频编解码器";
+"settings.bitrate_font_size" = "比特率";
+"settings.video_codec_font_size" = "视频编解码器";
+"settings.audio_codec_font_size" = "音频编解码器";
 "settings.export_separate_thumbnails" = "单独导出缩略图";
 
 "sidebar.videos" = "视频";
@@ -78,3 +84,10 @@
 "update.up_to_date_message" = "你已在使用最新版本（%@）。";
 "update.error_title" = "更新检查失败";
 "update.error_message" = "无法完成更新检查：\n%@";
+"metadata.label.duration" = "时长";
+"metadata.label.size" = "大小";
+"metadata.label.resolution" = "分辨率";
+"metadata.label.bitrate" = "比特率";
+"metadata.label.video" = "视频";
+"metadata.label.audio" = "音频";
+"metadata.unknown_value" = "未知";

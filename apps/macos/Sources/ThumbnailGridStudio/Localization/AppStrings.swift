@@ -53,8 +53,21 @@ enum AppStrings {
     static var showFileSize: String { text("settings.show_file_size") }
     static var showResolution: String { text("settings.show_resolution") }
     static var showTimestamp: String { text("settings.show_timestamp") }
+    static var showBitrate: String { text("settings.show_bitrate", defaultValue: "Bitrate") }
+    static var showVideoCodec: String { text("settings.show_video_codec", defaultValue: "Video codec") }
+    static var showAudioCodec: String { text("settings.show_audio_codec", defaultValue: "Audio codec") }
+    static var bitrateFontSize: String { text("settings.bitrate_font_size", defaultValue: "Bitrate font size") }
+    static var videoCodecFontSize: String { text("settings.video_codec_font_size", defaultValue: "Video codec font size") }
+    static var audioCodecFontSize: String { text("settings.audio_codec_font_size", defaultValue: "Audio codec font size") }
     static var exportSeparateThumbnails: String { text("settings.export_separate_thumbnails") }
     static var close: String { text("common.close") }
+    static var metadataLabelDuration: String { text("metadata.label.duration", defaultValue: "Duration") }
+    static var metadataLabelSize: String { text("metadata.label.size", defaultValue: "Size") }
+    static var metadataLabelResolution: String { text("metadata.label.resolution", defaultValue: "Resolution") }
+    static var metadataLabelBitrate: String { text("metadata.label.bitrate", defaultValue: "Bitrate") }
+    static var metadataLabelVideo: String { text("metadata.label.video", defaultValue: "Video") }
+    static var metadataLabelAudio: String { text("metadata.label.audio", defaultValue: "Audio") }
+    static var metadataUnknownValue: String { text("metadata.unknown_value", defaultValue: "unknown") }
 
     static var sidebarVideos: String { text("sidebar.videos") }
     static var importingVideos: String { text("sidebar.importing") }
@@ -88,6 +101,11 @@ enum AppStrings {
 
     private static func text(_ key: String) -> String {
         Bundle.module.localizedString(forKey: key, value: nil, table: "Localizable")
+    }
+
+    private static func text(_ key: String, defaultValue: String) -> String {
+        let localized = Bundle.module.localizedString(forKey: key, value: nil, table: "Localizable")
+        return localized == key ? defaultValue : localized
     }
 
     private static func formatted(_ key: String, _ arguments: CVarArg...) -> String {

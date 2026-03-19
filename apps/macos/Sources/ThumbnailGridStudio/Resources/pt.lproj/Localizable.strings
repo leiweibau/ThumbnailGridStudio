@@ -45,11 +45,17 @@
 "settings.timestamp_font_size" = "Carimbo de tempo";
 "settings.pixel_placeholder" = "Padrão: %d";
 "settings.auto" = "auto";
-"settings.show_file_name" = "Mostrar nome do arquivo";
-"settings.show_duration" = "Mostrar duração";
-"settings.show_file_size" = "Mostrar tamanho do arquivo";
-"settings.show_resolution" = "Mostrar resolução";
-"settings.show_timestamp" = "Mostrar carimbo de tempo";
+"settings.show_file_name" = "Nome do arquivo";
+"settings.show_duration" = "Duração";
+"settings.show_file_size" = "Tamanho do arquivo";
+"settings.show_resolution" = "Resolução";
+"settings.show_timestamp" = "Carimbo de tempo";
+"settings.show_bitrate" = "Taxa de bits";
+"settings.show_video_codec" = "Codec de vídeo";
+"settings.show_audio_codec" = "Codec de áudio";
+"settings.bitrate_font_size" = "Taxa de bits";
+"settings.video_codec_font_size" = "Codec de vídeo";
+"settings.audio_codec_font_size" = "Codec de áudio";
 "settings.export_separate_thumbnails" = "Exportar miniaturas separadamente";
 
 "sidebar.videos" = "Vídeos";
@@ -78,3 +84,10 @@
 "update.up_to_date_message" = "Você já está usando a versão mais recente (%@).";
 "update.error_title" = "Falha na verificação de atualização";
 "update.error_message" = "Não foi possível concluir a verificação de atualização:\n%@";
+"metadata.label.duration" = "Duração";
+"metadata.label.size" = "Tamanho";
+"metadata.label.resolution" = "Resolução";
+"metadata.label.bitrate" = "Taxa de bits";
+"metadata.label.video" = "Vídeo";
+"metadata.label.audio" = "Áudio";
+"metadata.unknown_value" = "desconhecido";

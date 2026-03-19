@@ -45,11 +45,17 @@
 "settings.timestamp_font_size" = "টাইমস্ট্যাম্প";
 "settings.pixel_placeholder" = "ডিফল্ট: %d";
 "settings.auto" = "স্বয়ংক্রিয়";
-"settings.show_file_name" = "ফাইলের নাম দেখান";
-"settings.show_duration" = "সময়কাল দেখান";
-"settings.show_file_size" = "ফাইলের আকার দেখান";
-"settings.show_resolution" = "রেজোলিউশন দেখান";
-"settings.show_timestamp" = "টাইমস্ট্যাম্প দেখান";
+"settings.show_file_name" = "ফাইলের নাম";
+"settings.show_duration" = "সময়কাল";
+"settings.show_file_size" = "ফাইলের আকার";
+"settings.show_resolution" = "রেজোলিউশন";
+"settings.show_timestamp" = "টাইমস্ট্যাম্প";
+"settings.show_bitrate" = "বিটরেট";
+"settings.show_video_codec" = "ভিডিও কোডেক";
+"settings.show_audio_codec" = "অডিও কোডেক";
+"settings.bitrate_font_size" = "বিটরেট";
+"settings.video_codec_font_size" = "ভিডিও কোডেক";
+"settings.audio_codec_font_size" = "অডিও কোডেক";
 "settings.export_separate_thumbnails" = "থাম্বনেইল আলাদাভাবে রপ্তানি করুন";
 
 "sidebar.videos" = "ভিডিও";
@@ -78,3 +84,10 @@
 "update.up_to_date_message" = "আপনি ইতিমধ্যেই সর্বশেষ সংস্করণ (%@) ব্যবহার করছেন।";
 "update.error_title" = "আপডেট পরীক্ষা ব্যর্থ";
 "update.error_message" = "আপডেট পরীক্ষা সম্পন্ন করা যায়নি:\n%@";
+"metadata.label.duration" = "সময়কাল";
+"metadata.label.size" = "আকার";
+"metadata.label.resolution" = "রেজোলিউশন";
+"metadata.label.bitrate" = "বিটরেট";
+"metadata.label.video" = "ভিডিও";
+"metadata.label.audio" = "অডিও";
+"metadata.unknown_value" = "অজানা";

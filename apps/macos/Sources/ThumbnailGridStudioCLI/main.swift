@@ -38,11 +38,17 @@ private struct CLIOptions {
     var showFileSize: Bool?
     var showResolution: Bool?
     var showTimestamp: Bool?
+    var showBitrate: Bool?
+    var showVideoCodec: Bool?
+    var showAudioCodec: Bool?
     var fileNameFontSize: CGFloat?
     var durationFontSize: CGFloat?
     var fileSizeFontSize: CGFloat?
     var resolutionFontSize: CGFloat?
     var timestampFontSize: CGFloat?
+    var bitrateFontSize: CGFloat?
+    var videoCodecFontSize: CGFloat?
+    var audioCodecFontSize: CGFloat?
     var showHelp = false
 }
 
@@ -60,11 +66,17 @@ private struct GUISettingsFallback {
     var showFileSize: Bool?
     var showResolution: Bool?
     var showTimestamp: Bool?
+    var showBitrate: Bool?
+    var showVideoCodec: Bool?
+    var showAudioCodec: Bool?
     var fileNameFontSize: CGFloat?
     var durationFontSize: CGFloat?
     var fileSizeFontSize: CGFloat?
     var resolutionFontSize: CGFloat?
     var timestampFontSize: CGFloat?
+    var bitrateFontSize: CGFloat?
+    var videoCodecFontSize: CGFloat?
+    var audioCodecFontSize: CGFloat?
 }
 
 private struct VideoInfo {
@@ -72,6 +84,9 @@ private struct VideoInfo {
     let width: Int
     let height: Int
     let fileSizeBytes: Int64
+    let bitrateBitsPerSecond: Int64
+    let videoCodec: String
+    let audioCodecs: [String]
 }
 
 private struct ResolvedRenderOptions {
@@ -88,11 +103,17 @@ private struct ResolvedRenderOptions {
     let showFileSize: Bool
     let showResolution: Bool
     let showTimestamp: Bool
+    let showBitrate: Bool
+    let showVideoCodec: Bool
+    let showAudioCodec: Bool
     let fileNameFontSize: CGFloat
     let durationFontSize: CGFloat
     let fileSizeFontSize: CGFloat
     let resolutionFontSize: CGFloat
     let timestampFontSize: CGFloat
+    let bitrateFontSize: CGFloat
+    let videoCodecFontSize: CGFloat
+    let audioCodecFontSize: CGFloat
 }
 
 private struct ThumbnailFrame {
@@ -188,6 +209,12 @@ private enum CLIRunner {
                 options.showResolution = try parseBool(try argumentValue(args, index: &index, name: "--show-resolution"), name: "--show-resolution")
             case "--show-timestamp":
                 options.showTimestamp = try parseBool(try argumentValue(args, index: &index, name: "--show-timestamp"), name: "--show-timestamp")
+            case "--show-bitrate":
+                options.showBitrate = try parseBool(try argumentValue(args, index: &index, name: "--show-bitrate"), name: "--show-bitrate")
+            case "--show-video-codec":
+                options.showVideoCodec = try parseBool(try argumentValue(args, index: &index, name: "--show-video-codec"), name: "--show-video-codec")
+            case "--show-audio-codec":
+                options.showAudioCodec = try parseBool(try argumentValue(args, index: &index, name: "--show-audio-codec"), name: "--show-audio-codec")
             case "--file-name-font-size":
                 options.fileNameFontSize = try parsePositiveCGFloat(try argumentValue(args, index: &index, name: "--file-name-font-size"), name: "--file-name-font-size")
             case "--duration-font-size":
@@ -198,6 +225,12 @@ private enum CLIRunner {
                 options.resolutionFontSize = try parsePositiveCGFloat(try argumentValue(args, index: &index, name: "--resolution-font-size"), name: "--resolution-font-size")
             case "--timestamp-font-size":
                 options.timestampFontSize = try parsePositiveCGFloat(try argumentValue(args, index: &index, name: "--timestamp-font-size"), name: "--timestamp-font-size")
+            case "--bitrate-font-size":
+                options.bitrateFontSize = try parsePositiveCGFloat(try argumentValue(args, index: &index, name: "--bitrate-font-size"), name: "--bitrate-font-size")
+            case "--video-codec-font-size":
+                options.videoCodecFontSize = try parsePositiveCGFloat(try argumentValue(args, index: &index, name: "--video-codec-font-size"), name: "--video-codec-font-size")
+            case "--audio-codec-font-size":
+                options.audioCodecFontSize = try parsePositiveCGFloat(try argumentValue(args, index: &index, name: "--audio-codec-font-size"), name: "--audio-codec-font-size")
             default:
                 if argument.hasPrefix("-") {
                     throw CLIError.invalidArgument("Unknown option: \(argument). Use --h for help.")
@@ -372,11 +405,17 @@ private enum CLIRunner {
             showFileSize: cli.showFileSize ?? fallback.showFileSize ?? true,
             showResolution: cli.showResolution ?? fallback.showResolution ?? true,
             showTimestamp: cli.showTimestamp ?? fallback.showTimestamp ?? true,
+            showBitrate: cli.showBitrate ?? fallback.showBitrate ?? true,
+            showVideoCodec: cli.showVideoCodec ?? fallback.showVideoCodec ?? true,
+            showAudioCodec: cli.showAudioCodec ?? fallback.showAudioCodec ?? true,
             fileNameFontSize: cli.fileNameFontSize ?? fallback.fileNameFontSize ?? 26,
             durationFontSize: cli.durationFontSize ?? fallback.durationFontSize ?? 14,
             fileSizeFontSize: cli.fileSizeFontSize ?? fallback.fileSizeFontSize ?? 14,
             resolutionFontSize: cli.resolutionFontSize ?? fallback.resolutionFontSize ?? 14,
-            timestampFontSize: cli.timestampFontSize ?? fallback.timestampFontSize ?? 12
+            timestampFontSize: cli.timestampFontSize ?? fallback.timestampFontSize ?? 12,
+            bitrateFontSize: cli.bitrateFontSize ?? fallback.bitrateFontSize ?? 18,
+            videoCodecFontSize: cli.videoCodecFontSize ?? fallback.videoCodecFontSize ?? 16,
+            audioCodecFontSize: cli.audioCodecFontSize ?? fallback.audioCodecFontSize ?? 16
         )
     }
 
@@ -444,11 +483,17 @@ private enum CLIRunner {
             showFileSize: boolValue(domain["settings.showFileSize"]),
             showResolution: boolValue(domain["settings.showResolution"]),
             showTimestamp: boolValue(domain["settings.showTimestamp"]),
+            showBitrate: boolValue(domain["settings.showBitrate"]),
+            showVideoCodec: boolValue(domain["settings.showVideoCodec"]),
+            showAudioCodec: boolValue(domain["settings.showAudioCodec"]),
             fileNameFontSize: positiveCGFloat(from: domain["settings.fileNameFontSizeText"]),
             durationFontSize: positiveCGFloat(from: domain["settings.durationFontSizeText"]),
             fileSizeFontSize: positiveCGFloat(from: domain["settings.fileSizeFontSizeText"]),
             resolutionFontSize: positiveCGFloat(from: domain["settings.resolutionFontSizeText"]),
-            timestampFontSize: positiveCGFloat(from: domain["settings.timestampFontSizeText"])
+            timestampFontSize: positiveCGFloat(from: domain["settings.timestampFontSizeText"]),
+            bitrateFontSize: positiveCGFloat(from: domain["settings.bitrateFontSizeText"]),
+            videoCodecFontSize: positiveCGFloat(from: domain["settings.videoCodecFontSizeText"]),
+            audioCodecFontSize: positiveCGFloat(from: domain["settings.audioCodecFontSizeText"])
         )
     }
 
@@ -507,8 +552,7 @@ private enum CLIRunner {
             executable: ffprobePath,
             arguments: [
                 "-v", "error",
-                "-select_streams", "v:0",
-                "-show_entries", "stream=width,height:format=duration",
+                "-show_entries", "stream=codec_type,codec_name,width,height,bit_rate:stream_tags=language:format=duration,bit_rate",
                 "-of", "json",
                 inputURL.path
             ],
@@ -523,15 +567,59 @@ private enum CLIRunner {
         let data = Data(stdout.utf8)
         let parsed = try JSONDecoder().decode(FFprobeResponse.self, from: data)
         let duration = Double(parsed.format?.duration ?? "") ?? 0
-        let width = Int(parsed.streams.first?.width ?? 0)
-        let height = Int(parsed.streams.first?.height ?? 0)
+        let videoStream = parsed.streams.first(where: { $0.codecType == "video" })
+        let audioCodecs = parsed.streams
+            .filter { $0.codecType == "audio" }
+            .map { formatAudioCodecEntry(codec: $0.codecName, language: $0.tags?.language, bitrateBitsPerSecond: parseBitrateBitsPerSecond($0.bitRate)) }
+            .filter { !$0.isEmpty }
+        let width = Int(videoStream?.width ?? 0)
+        let height = Int(videoStream?.height ?? 0)
+        let bitrateBitsPerSecond = max(
+            parseBitrateBitsPerSecond(parsed.format?.bitRate),
+            parseBitrateBitsPerSecond(videoStream?.bitRate)
+        )
 
         return VideoInfo(
             duration: duration.isFinite && duration > 0 ? duration : 1,
             width: width,
             height: height,
-            fileSizeBytes: fileSizeBytes
+            fileSizeBytes: fileSizeBytes,
+            bitrateBitsPerSecond: bitrateBitsPerSecond,
+            videoCodec: normalizedCodecName(videoStream?.codecName),
+            audioCodecs: audioCodecs
         )
+    }
+
+    private static func parseBitrateBitsPerSecond(_ value: String?) -> Int64 {
+        guard let value, let parsed = Int64(value), parsed > 0 else { return 0 }
+        return parsed
+    }
+
+    private static func normalizedCodecName(_ value: String?) -> String {
+        value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    private static func normalizedLanguageCode(_ value: String?) -> String {
+        guard let value else { return "" }
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalized.isEmpty, normalized != "und" else { return "" }
+        return normalized
+    }
+
+    private static func formatCompactBitrate(_ bitrateBitsPerSecond: Int64) -> String {
+        guard bitrateBitsPerSecond > 0 else { return "" }
+        let kbps = Double(bitrateBitsPerSecond) / 1000
+        return kbps >= 1000 ? String(format: "%.2f Mbps", kbps / 1000) : String(format: "%.0f kbps", kbps)
+    }
+
+    private static func formatAudioCodecEntry(codec: String?, language: String?, bitrateBitsPerSecond: Int64) -> String {
+        let normalizedCodec = normalizedCodecName(codec)
+        let normalizedLanguage = normalizedLanguageCode(language)
+        let normalizedBitrate = formatCompactBitrate(bitrateBitsPerSecond)
+        guard !normalizedCodec.isEmpty else { return "" }
+        let details = [normalizedLanguage, normalizedBitrate].filter { !$0.isEmpty }
+        guard !details.isEmpty else { return normalizedCodec }
+        return "\(normalizedCodec) (\(details.joined(separator: ", ")))"
     }
 
     private static func composeFinalImage(
@@ -577,11 +665,26 @@ private enum CLIRunner {
             .font: NSFont.systemFont(ofSize: options.resolutionFontSize, weight: .medium),
             .foregroundColor: metadataColor.withAlphaComponent(0.9)
         ]
+        let bitrateAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.bitrateFontSize, weight: .medium),
+            .foregroundColor: metadataColor.withAlphaComponent(0.9)
+        ]
+        let videoCodecAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.videoCodecFontSize, weight: .medium),
+            .foregroundColor: metadataColor.withAlphaComponent(0.9)
+        ]
+        let audioCodecAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.audioCodecFontSize, weight: .medium),
+            .foregroundColor: metadataColor.withAlphaComponent(0.9)
+        ]
 
         let title = inputURL.lastPathComponent
         let durationText = timestampText(for: info.duration)
         let sizeText = ByteCountFormatter.string(fromByteCount: info.fileSizeBytes, countStyle: .file)
         let resolutionText = "\(max(info.width, 0)) x \(max(info.height, 0)) px"
+        let bitrateText = formatBitrate(info.bitrateBitsPerSecond)
+        let videoCodecText = formatCodec(info.videoCodec)
+        let audioCodecTexts = formatAudioCodecs(info.audioCodecs)
 
         var currentY = canvasSize.height - verticalPadding
         if options.showFileName {
@@ -606,12 +709,54 @@ private enum CLIRunner {
             currentY -= metadataParts.lineHeight + 4
         }
 
-        if options.showResolution {
-            let resolutionLineHeight = lineHeight(for: resolutionAttributes)
-            resolutionText.draw(
-                in: NSRect(x: horizontalPadding, y: currentY - resolutionLineHeight, width: canvasSize.width - horizontalPadding * 2, height: resolutionLineHeight),
-                withAttributes: resolutionAttributes
+        let twoColumnLine = metadataColumns(
+            leftText: options.showResolution ? "Resolution: \(resolutionText)" : nil,
+            rightText: options.showBitrate ? "Bitrate: \(bitrateText)" : nil,
+            leftAttributes: resolutionAttributes,
+            rightAttributes: bitrateAttributes
+        )
+        if let leftLine = twoColumnLine.leftLine {
+            leftLine.draw(
+                in: NSRect(
+                    x: horizontalPadding,
+                    y: currentY - twoColumnLine.lineHeight,
+                    width: twoColumnLine.leftColumnWidth,
+                    height: twoColumnLine.lineHeight
+                )
             )
+        }
+        if let rightLine = twoColumnLine.rightLine {
+            rightLine.draw(
+                in: NSRect(
+                    x: horizontalPadding + twoColumnLine.rightColumnXOffset,
+                    y: currentY - twoColumnLine.lineHeight,
+                    width: canvasSize.width - horizontalPadding * 2 - twoColumnLine.rightColumnXOffset,
+                    height: twoColumnLine.lineHeight
+                )
+            )
+        }
+        if twoColumnLine.hasContent {
+            currentY -= twoColumnLine.lineHeight + 4
+        }
+
+        if options.showVideoCodec {
+            let lineHeight = lineHeight(for: videoCodecAttributes)
+            "Video: \(videoCodecText)".draw(
+                in: NSRect(x: horizontalPadding, y: currentY - lineHeight, width: canvasSize.width - horizontalPadding * 2, height: lineHeight),
+                withAttributes: videoCodecAttributes
+            )
+            currentY -= lineHeight + 4
+        }
+
+        if options.showAudioCodec {
+            let lineHeight = lineHeight(for: audioCodecAttributes)
+            for codec in audioCodecTexts {
+                "Audio: \(codec)".draw(
+                    in: NSRect(x: horizontalPadding, y: currentY - lineHeight, width: canvasSize.width - horizontalPadding * 2, height: lineHeight),
+                    withAttributes: audioCodecAttributes
+                )
+                currentY -= lineHeight + 4
+            }
         }
 
         for row in 0..<options.rows {
@@ -652,6 +797,15 @@ private enum CLIRunner {
         let resolutionAttributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: options.resolutionFontSize, weight: .medium)
         ]
+        let bitrateAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.bitrateFontSize, weight: .medium)
+        ]
+        let videoCodecAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.videoCodecFontSize, weight: .medium)
+        ]
+        let audioCodecAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: options.audioCodecFontSize, weight: .medium)
+        ]
 
         var height: CGFloat = 18
         if options.showFileName {
@@ -660,8 +814,14 @@ private enum CLIRunner {
         if options.showDuration || options.showFileSize {
             height += max(lineHeight(for: durationAttributes), lineHeight(for: fileSizeAttributes)) + 8
         }
-        if options.showResolution {
-            height += lineHeight(for: resolutionAttributes) + 6
+        if options.showResolution || options.showBitrate {
+            height += max(lineHeight(for: resolutionAttributes), lineHeight(for: bitrateAttributes)) + 6
+        }
+        if options.showVideoCodec {
+            height += lineHeight(for: videoCodecAttributes) + 6
+        }
+        if options.showAudioCodec {
+            height += lineHeight(for: audioCodecAttributes) + 6
         }
         return max(height, 18)
     }
@@ -711,6 +871,38 @@ private enum CLIRunner {
         }
 
         return (line.length > 0 ? line : nil, lineHeight)
+    }
+
+    private static func metadataColumns(
+        leftText: String?,
+        rightText: String?,
+        leftAttributes: [NSAttributedString.Key: Any],
+        rightAttributes: [NSAttributedString.Key: Any]
+    ) -> (leftLine: NSAttributedString?, rightLine: NSAttributedString?, leftColumnWidth: CGFloat, rightColumnXOffset: CGFloat, lineHeight: CGFloat, hasContent: Bool) {
+        let leftLine = leftText.map { NSAttributedString(string: $0, attributes: leftAttributes) }
+        let rightLine = rightText.map { NSAttributedString(string: $0, attributes: rightAttributes) }
+        let leftWidth = leftText.map { ceil(($0 as NSString).size(withAttributes: leftAttributes).width) } ?? 0
+        let rightOffset = leftWidth > 0 && rightLine != nil ? leftWidth + 150 : 0
+        let lineHeight = max(lineHeight(for: leftAttributes), lineHeight(for: rightAttributes))
+        return (leftLine, rightLine, leftWidth, rightOffset, lineHeight, leftLine != nil || rightLine != nil)
+    }
+
+    private static func formatBitrate(_ bitrateBitsPerSecond: Int64) -> String {
+        guard bitrateBitsPerSecond > 0 else { return "unknown" }
+        let kbps = Double(bitrateBitsPerSecond) / 1000
+        return kbps >= 1000 ? String(format: "%.2f Mbps", kbps / 1000) : String(format: "%.0f kbps", kbps)
+    }
+
+    private static func formatCodec(_ codec: String) -> String {
+        let trimmed = codec.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "unknown" : trimmed
+    }
+
+    private static func formatAudioCodecs(_ codecs: [String]) -> [String] {
+        let normalized = codecs
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return normalized.isEmpty ? ["unknown"] : normalized
     }
 
     private static func drawTimestamp(_ text: String, in frame: NSRect, fontSize: CGFloat) {
@@ -962,11 +1154,17 @@ private enum CLIRunner {
               --show-file-size <bool> Show file size in header (fallback: GUI setting).
               --show-resolution <bool> Show resolution in header (fallback: GUI setting).
               --show-timestamp <bool> Show timestamp badge on thumbnails (fallback: GUI setting).
+              --show-bitrate <bool>  Show bitrate in header (fallback: GUI setting).
+              --show-video-codec <bool> Show video codec in header (fallback: GUI setting).
+              --show-audio-codec <bool> Show audio codec lines in header (fallback: GUI setting).
               --file-name-font-size <n> Header filename font size (fallback: GUI setting).
               --duration-font-size <n> Header duration font size (fallback: GUI setting).
               --file-size-font-size <n> Header file size font size (fallback: GUI setting).
               --resolution-font-size <n> Header resolution font size (fallback: GUI setting).
               --timestamp-font-size <n> Thumbnail timestamp font size (fallback: GUI setting).
+              --bitrate-font-size <n> Header bitrate font size (fallback: GUI setting).
+              --video-codec-font-size <n> Header video codec font size (fallback: GUI setting).
+              --audio-codec-font-size <n> Header audio codec font size (fallback: GUI setting).
             """
         )
     }
@@ -974,12 +1172,35 @@ private enum CLIRunner {
 
 private struct FFprobeResponse: Decodable {
     struct Stream: Decodable {
+        let codecType: String?
+        let codecName: String?
         let width: Double?
         let height: Double?
+        let bitRate: String?
+        let tags: Tags?
+
+        struct Tags: Decodable {
+            let language: String?
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case codecType = "codec_type"
+            case codecName = "codec_name"
+            case width
+            case height
+            case bitRate = "bit_rate"
+            case tags
+        }
     }
 
     struct Format: Decodable {
         let duration: String?
+        let bitRate: String?
+
+        enum CodingKeys: String, CodingKey {
+            case duration
+            case bitRate = "bit_rate"
+        }
     }
 
     let streams: [Stream]

@@ -45,11 +45,17 @@
 "settings.timestamp_font_size" = "Метка времени";
 "settings.pixel_placeholder" = "По умолчанию: %d";
 "settings.auto" = "авто";
-"settings.show_file_name" = "Показывать имя файла";
-"settings.show_duration" = "Показывать длительность";
-"settings.show_file_size" = "Показывать размер файла";
-"settings.show_resolution" = "Показывать разрешение";
-"settings.show_timestamp" = "Показывать метку времени";
+"settings.show_file_name" = "Имя файла";
+"settings.show_duration" = "Длительность";
+"settings.show_file_size" = "Размер файла";
+"settings.show_resolution" = "Разрешение";
+"settings.show_timestamp" = "Метка времени";
+"settings.show_bitrate" = "Битрейт";
+"settings.show_video_codec" = "Видеокодек";
+"settings.show_audio_codec" = "Аудиокодек";
+"settings.bitrate_font_size" = "Битрейт";
+"settings.video_codec_font_size" = "Видеокодек";
+"settings.audio_codec_font_size" = "Аудиокодек";
 "settings.export_separate_thumbnails" = "Экспортировать миниатюры отдельно";
 
 "sidebar.videos" = "Видео";
@@ -78,3 +84,10 @@
 "update.up_to_date_message" = "Вы уже используете последнюю версию (%@).";
 "update.error_title" = "Ошибка проверки обновлений";
 "update.error_message" = "Не удалось выполнить проверку обновлений:\n%@";
+"metadata.label.duration" = "Длительность";
+"metadata.label.size" = "Размер";
+"metadata.label.resolution" = "Разрешение";
+"metadata.label.bitrate" = "Битрейт";
+"metadata.label.video" = "Видео";
+"metadata.label.audio" = "Аудио";
+"metadata.unknown_value" = "неизвестно";

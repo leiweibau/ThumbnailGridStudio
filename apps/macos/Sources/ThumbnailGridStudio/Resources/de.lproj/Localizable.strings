@@ -45,11 +45,17 @@
 "settings.timestamp_font_size" = "Timestamp";
 "settings.pixel_placeholder" = "Standard: %d";
 "settings.auto" = "auto";
-"settings.show_file_name" = "Dateiname anzeigen";
-"settings.show_duration" = "Spielzeit anzeigen";
-"settings.show_file_size" = "Dateigröße anzeigen";
-"settings.show_resolution" = "Auflösung anzeigen";
-"settings.show_timestamp" = "Timestamp anzeigen";
+"settings.show_file_name" = "Dateiname";
+"settings.show_duration" = "Spielzeit";
+"settings.show_file_size" = "Dateigröße";
+"settings.show_resolution" = "Auflösung";
+"settings.show_timestamp" = "Timestamp";
+"settings.show_bitrate" = "Bitrate";
+"settings.show_video_codec" = "Video-Codec";
+"settings.show_audio_codec" = "Audio-Codec";
+"settings.bitrate_font_size" = "Bitrate";
+"settings.video_codec_font_size" = "Video-Codec";
+"settings.audio_codec_font_size" = "Audio-Codec";
 "settings.export_separate_thumbnails" = "Exportiere Thumbnails separat";
 
 "sidebar.videos" = "Videos";
@@ -78,3 +84,10 @@
 "update.up_to_date_message" = "Du verwendest bereits die aktuelle Version (%@).";
 "update.error_title" = "Update-Prüfung fehlgeschlagen";
 "update.error_message" = "Die Update-Prüfung konnte nicht durchgeführt werden:\n%@";
+"metadata.label.duration" = "Dauer";
+"metadata.label.size" = "Größe";
+"metadata.label.resolution" = "Auflösung";
+"metadata.label.bitrate" = "Bitrate";
+"metadata.label.video" = "Video";
+"metadata.label.audio" = "Audio";
+"metadata.unknown_value" = "unbekannt";

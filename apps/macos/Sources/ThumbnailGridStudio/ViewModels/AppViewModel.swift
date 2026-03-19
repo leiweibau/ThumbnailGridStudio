@@ -149,7 +149,10 @@ final class AppViewModel: ObservableObject {
                 let item = VideoItem(
                     url: newURLs[index],
                     duration: 0,
-                    fileSize: metadata.fileSize
+                    fileSize: metadata.fileSize,
+                    bitrateBitsPerSecond: metadata.bitrateBitsPerSecond,
+                    videoCodec: metadata.videoCodec,
+                    audioCodecs: metadata.audioCodecs
                 )
                 videos.append(item)
                 selectedVideoID = selectedVideoID ?? item.id
@@ -245,6 +248,18 @@ final class AppViewModel: ObservableObject {
         return "\(width) × \(height) px"
     }
 
+    func formattedBitrate(for item: VideoItem) -> String {
+        Self.formatBitrate(item.bitrateBitsPerSecond)
+    }
+
+    func formattedVideoCodec(for item: VideoItem) -> String {
+        Self.formatCodec(item.videoCodec)
+    }
+
+    func formattedAudioCodecs(for item: VideoItem) -> [String] {
+        Self.formatAudioCodecs(item.audioCodecs)
+    }
+
     func backgroundColorBinding() -> Binding<Color> {
         Binding(
             get: { self.settings.backgroundColor },
@@ -274,10 +289,13 @@ final class AppViewModel: ObservableObject {
         }
 
         let image = ContactSheetRenderer.renderPlaceholder(
-            title: item?.fileName ?? AppStrings.previewTitle,
-            durationText: item.map(formattedDuration(for:)) ?? "00:00",
-            resolutionText: item.map(formattedResolution(for:)) ?? "0 × 0 px",
-            fileSizeText: item.map(formattedSize(for:)) ?? "0 KB",
+            title: AppStrings.previewTitle,
+            durationText: "00:00",
+            resolutionText: "0 x 0",
+            fileSizeText: "0 B",
+            bitrateText: AppStrings.metadataUnknownValue,
+            videoCodecText: AppStrings.metadataUnknownValue,
+            audioCodecTexts: [AppStrings.metadataUnknownValue],
             options: renderOptions(for: item)
         )
         cachedPlaceholderPreviewKey = cacheKey
@@ -292,6 +310,9 @@ final class AppViewModel: ObservableObject {
                 let renderMetadata = try await VideoProcessingService.loadRenderMetadata(for: item.url)
                 item.duration = renderMetadata.duration
                 item.resolution = renderMetadata.resolution
+                item.bitrateBitsPerSecond = renderMetadata.bitrateBitsPerSecond
+                item.videoCodec = renderMetadata.videoCodec
+                item.audioCodecs = renderMetadata.audioCodecs
             }
 
             let thumbnailSize = settings.resolvedThumbnailSize(for: item.resolution)
@@ -302,10 +323,13 @@ final class AppViewModel: ObservableObject {
             )
 
             let image = ContactSheetRenderer.render(
-                title: item.fileName,
-                durationText: formattedDuration(for: item),
-                resolutionText: formattedResolution(for: item),
-                fileSizeText: formattedSize(for: item),
+                title: AppStrings.previewTitle,
+                durationText: "00:00",
+                resolutionText: "0 x 0",
+                fileSizeText: "0 B",
+                bitrateText: AppStrings.metadataUnknownValue,
+                videoCodecText: AppStrings.metadataUnknownValue,
+                audioCodecTexts: [AppStrings.metadataUnknownValue],
                 thumbnails: thumbnails,
                 options: renderOptions(for: item)
             )
@@ -333,7 +357,10 @@ final class AppViewModel: ObservableObject {
                 fileName: $0.fileName,
                 duration: $0.duration,
                 fileSize: $0.fileSize,
-                resolution: $0.resolution
+                resolution: $0.resolution,
+                bitrateBitsPerSecond: $0.bitrateBitsPerSecond,
+                videoCodec: $0.videoCodec,
+                audioCodecs: $0.audioCodecs
             )
         }
 
@@ -734,12 +761,18 @@ final class AppViewModel: ObservableObject {
             fileSizeFontSize: settings.resolvedFileSizeFontSize,
             resolutionFontSize: settings.resolvedResolutionFontSize,
             timestampFontSize: settings.resolvedTimestampFontSize,
+            bitrateFontSize: settings.resolvedBitrateFontSize,
+            videoCodecFontSize: settings.resolvedVideoCodecFontSize,
+            audioCodecFontSize: settings.resolvedAudioCodecFontSize,
             metadataVisibility: ContactSheetMetadataVisibility(
                 showFileName: settings.showFileName,
                 showDuration: settings.showDuration,
                 showFileSize: settings.showFileSize,
                 showResolution: settings.showResolution,
-                showTimestamp: settings.showTimestamp
+                showTimestamp: settings.showTimestamp,
+                showBitrate: settings.showBitrate,
+                showVideoCodec: settings.showVideoCodec,
+                showAudioCodec: settings.showAudioCodec
             )
         )
     }
@@ -840,11 +873,17 @@ final class AppViewModel: ObservableObject {
         do {
             var duration = input.duration
             var resolution = input.resolution
+            var bitrateBitsPerSecond = input.bitrateBitsPerSecond
+            var videoCodec = input.videoCodec
+            var audioCodecs = input.audioCodecs
 
-            if resolution == .zero || duration == 0 {
+            if resolution == .zero || duration == 0 || bitrateBitsPerSecond == 0 || videoCodec.isEmpty || audioCodecs.isEmpty {
                 let renderMetadata = try await VideoProcessingService.loadRenderMetadata(for: input.url)
                 duration = renderMetadata.duration
                 resolution = renderMetadata.resolution
+                bitrateBitsPerSecond = renderMetadata.bitrateBitsPerSecond
+                videoCodec = renderMetadata.videoCodec
+                audioCodecs = renderMetadata.audioCodecs
             }
 
             let thumbnailSize = configuration.resolvedThumbnailSize(for: resolution)
@@ -859,6 +898,9 @@ final class AppViewModel: ObservableObject {
                 durationText: formatDuration(duration),
                 resolutionText: formatResolution(resolution),
                 fileSizeText: formatFileSize(input.fileSize),
+                bitrateText: formatBitrate(bitrateBitsPerSecond),
+                videoCodecText: formatCodec(videoCodec),
+                audioCodecTexts: formatAudioCodecs(audioCodecs),
                 thumbnails: thumbnails,
                 options: configuration.renderOptions(for: resolution)
             )
@@ -976,6 +1018,24 @@ final class AppViewModel: ObservableObject {
         guard width > 0, height > 0 else { return AppStrings.unknownResolution }
         return "\(width) × \(height) px"
     }
+
+    private static func formatBitrate(_ bitrateBitsPerSecond: Int64) -> String {
+        guard bitrateBitsPerSecond > 0 else { return AppStrings.metadataUnknownValue }
+        let kbps = Double(bitrateBitsPerSecond) / 1000
+        return kbps >= 1000 ? String(format: "%.2f Mbps", kbps / 1000) : String(format: "%.0f kbps", kbps)
+    }
+
+    private static func formatCodec(_ codec: String) -> String {
+        let trimmed = codec.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? AppStrings.metadataUnknownValue : trimmed
+    }
+
+    private static func formatAudioCodecs(_ codecs: [String]) -> [String] {
+        let normalized = codecs
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return normalized.isEmpty ? [AppStrings.metadataUnknownValue] : normalized
+    }
 }
 
 @MainActor
@@ -1018,6 +1078,9 @@ private struct RenderJobInput: Sendable {
     let duration: TimeInterval
     let fileSize: Int64
     let resolution: CGSize
+    let bitrateBitsPerSecond: Int64
+    let videoCodec: String
+    let audioCodecs: [String]
 }
 
 private struct RenderJobResult {
@@ -1046,6 +1109,9 @@ private struct RenderConfiguration: Sendable {
     let fileSizeFontSize: CGFloat
     let resolutionFontSize: CGFloat
     let timestampFontSize: CGFloat
+    let bitrateFontSize: CGFloat
+    let videoCodecFontSize: CGFloat
+    let audioCodecFontSize: CGFloat
     let exportFormat: ExportFormat
     let exportSeparateThumbnails: Bool
     let metadataVisibility: ContactSheetMetadataVisibility
@@ -1064,6 +1130,9 @@ private struct RenderConfiguration: Sendable {
         fileSizeFontSize = settings.resolvedFileSizeFontSize
         resolutionFontSize = settings.resolvedResolutionFontSize
         timestampFontSize = settings.resolvedTimestampFontSize
+        bitrateFontSize = settings.resolvedBitrateFontSize
+        videoCodecFontSize = settings.resolvedVideoCodecFontSize
+        audioCodecFontSize = settings.resolvedAudioCodecFontSize
         exportFormat = settings.exportFormat
         exportSeparateThumbnails = settings.exportSeparateThumbnails
         metadataVisibility = ContactSheetMetadataVisibility(
@@ -1071,7 +1140,10 @@ private struct RenderConfiguration: Sendable {
             showDuration: settings.showDuration,
             showFileSize: settings.showFileSize,
             showResolution: settings.showResolution,
-            showTimestamp: settings.showTimestamp
+            showTimestamp: settings.showTimestamp,
+            showBitrate: settings.showBitrate,
+            showVideoCodec: settings.showVideoCodec,
+            showAudioCodec: settings.showAudioCodec
         )
     }
 
@@ -1098,6 +1170,9 @@ private struct RenderConfiguration: Sendable {
             fileSizeFontSize: fileSizeFontSize,
             resolutionFontSize: resolutionFontSize,
             timestampFontSize: timestampFontSize,
+            bitrateFontSize: bitrateFontSize,
+            videoCodecFontSize: videoCodecFontSize,
+            audioCodecFontSize: audioCodecFontSize,
             metadataVisibility: metadataVisibility
         )
     }

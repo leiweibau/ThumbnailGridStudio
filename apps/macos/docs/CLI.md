@@ -62,6 +62,15 @@ The project ships with a native command-line tool: `thumbnail-grid-studio-cli`.
 - `--show-resolution <bool>`  
   Show or hide the resolution line in the header. Falls back to GUI setting.
 
+- `--show-bitrate <bool>`  
+  Show or hide the bitrate line in the header. Falls back to GUI setting.
+
+- `--show-video-codec <bool>`  
+  Show or hide the video codec line in the header. Falls back to GUI setting.
+
+- `--show-audio-codec <bool>`  
+  Show or hide the audio codec lines in the header. Falls back to GUI setting.
+
 - `--show-timestamp <bool>`  
   Show or hide timestamp badges on thumbnails. Falls back to GUI setting.
 
@@ -76,6 +85,15 @@ The project ships with a native command-line tool: `thumbnail-grid-studio-cli`.
 
 - `--resolution-font-size <n>`  
   Resolution font size. Falls back to GUI setting.
+
+- `--bitrate-font-size <n>`  
+  Bitrate font size. Falls back to GUI setting.
+
+- `--video-codec-font-size <n>`  
+  Video codec font size. Falls back to GUI setting.
+
+- `--audio-codec-font-size <n>`  
+  Audio codec font size. Falls back to GUI setting.
 
 - `--timestamp-font-size <n>`  
   Timestamp badge font size. Falls back to GUI setting.
@@ -128,6 +146,9 @@ If no GUI value exists, built-in defaults are used.
   --duration-font-size 22 \
   --file-size-font-size 22 \
   --resolution-font-size 22 \
+  --bitrate-font-size 22 \
+  --video-codec-font-size 18 \
+  --audio-codec-font-size 18 \
   --timestamp-font-size 16
 ```
 
@@ -139,5 +160,8 @@ If no GUI value exists, built-in defaults are used.
   --output-dir /Users/you/Exports \
   --show-file-size false \
   --show-resolution false \
+  --show-bitrate false \
+  --show-video-codec false \
+  --show-audio-codec false \
   --show-timestamp false
 ```

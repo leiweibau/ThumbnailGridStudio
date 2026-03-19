@@ -89,6 +89,13 @@ struct SettingsView: View {
                             placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultFileSizeFontSize)),
                             fieldWidth: metadataFieldWidth
                         )
+                        MetadataGridRow(
+                            title: AppStrings.showTimestamp,
+                            isOn: $settings.showTimestamp,
+                            fontSizeText: $settings.timestampFontSizeText,
+                            placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultTimestampFontSize)),
+                            fieldWidth: metadataFieldWidth
+                        )
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -100,10 +107,24 @@ struct SettingsView: View {
                             fieldWidth: metadataFieldWidth
                         )
                         MetadataGridRow(
-                            title: AppStrings.showTimestamp,
-                            isOn: $settings.showTimestamp,
-                            fontSizeText: $settings.timestampFontSizeText,
-                            placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultTimestampFontSize)),
+                            title: AppStrings.showBitrate,
+                            isOn: $settings.showBitrate,
+                            fontSizeText: $settings.bitrateFontSizeText,
+                            placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultBitrateFontSize)),
+                            fieldWidth: metadataFieldWidth
+                        )
+                        MetadataGridRow(
+                            title: AppStrings.showVideoCodec,
+                            isOn: $settings.showVideoCodec,
+                            fontSizeText: $settings.videoCodecFontSizeText,
+                            placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultVideoCodecFontSize)),
+                            fieldWidth: metadataFieldWidth
+                        )
+                        MetadataGridRow(
+                            title: AppStrings.showAudioCodec,
+                            isOn: $settings.showAudioCodec,
+                            fontSizeText: $settings.audioCodecFontSizeText,
+                            placeholder: AppStrings.pixelPlaceholder(Int(AppSettings.defaultAudioCodecFontSize)),
                             fieldWidth: metadataFieldWidth
                         )
                     }
@@ -224,6 +245,7 @@ struct SettingsView: View {
             }
         }
     }
+
 }
 
 private struct MetadataGridRow: View {
