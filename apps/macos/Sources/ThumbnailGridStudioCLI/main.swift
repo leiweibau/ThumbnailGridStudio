@@ -681,7 +681,7 @@ private enum CLIRunner {
         let title = inputURL.lastPathComponent
         let durationText = timestampText(for: info.duration)
         let sizeText = ByteCountFormatter.string(fromByteCount: info.fileSizeBytes, countStyle: .file)
-        let resolutionText = "\(max(info.width, 0)) x \(max(info.height, 0)) px"
+        let resolutionText = "\(max(info.width, 0)) x \(max(info.height, 0))"
         let bitrateText = formatBitrate(info.bitrateBitsPerSecond)
         let videoCodecText = formatCodec(info.videoCodec)
         let audioCodecTexts = formatAudioCodecs(info.audioCodecs)

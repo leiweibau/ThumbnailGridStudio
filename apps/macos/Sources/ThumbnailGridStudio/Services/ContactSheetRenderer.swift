@@ -140,8 +140,16 @@ enum ContactSheetRenderer {
         let bottomLeftText = options.metadataVisibility.showResolution ? "\(labelResolution): \(resolutionText)" : nil
         let bottomRightText = options.metadataVisibility.showBitrate ? "\(labelBitrate): \(bitrateText)" : nil
         let metadataColumnGap: CGFloat = 50
+        let leftMetadataColumnWidth = max(
+            metadataLeftColumnWidth,
+            resolutionMetadataMinimumWidth(
+                label: labelResolution,
+                attributes: resolutionAttributes,
+                minimumValueCharacterCount: 14
+            )
+        )
         let sharedRightColumnXOffset = sharedRightColumnOffset(
-            leftColumnWidth: metadataLeftColumnWidth,
+            leftColumnWidth: leftMetadataColumnWidth,
             gap: metadataColumnGap
         )
 
@@ -157,7 +165,7 @@ enum ContactSheetRenderer {
                 in: NSRect(
                     x: horizontalPadding,
                     y: currentY - topMetadataLine.lineHeight,
-                    width: metadataLeftColumnWidth,
+                    width: leftMetadataColumnWidth,
                     height: topMetadataLine.lineHeight
                 )
             )
@@ -188,7 +196,7 @@ enum ContactSheetRenderer {
                 in: NSRect(
                     x: horizontalPadding,
                     y: currentY - bottomMetadataLine.lineHeight,
-                    width: metadataLeftColumnWidth,
+                    width: leftMetadataColumnWidth,
                     height: bottomMetadataLine.lineHeight
                 )
             )
@@ -412,6 +420,16 @@ enum ContactSheetRenderer {
         gap: CGFloat
     ) -> CGFloat {
         leftColumnWidth + gap
+    }
+
+    private static func resolutionMetadataMinimumWidth(
+        label: String,
+        attributes: [NSAttributedString.Key: Any],
+        minimumValueCharacterCount: Int
+    ) -> CGFloat {
+        let placeholder = String(repeating: "8", count: max(minimumValueCharacterCount, 0))
+        let sample = "\(label): \(placeholder)"
+        return ceil((sample as NSString).size(withAttributes: attributes).width)
     }
 
     private static func lineHeight(for attributes: [NSAttributedString.Key: Any]) -> CGFloat {

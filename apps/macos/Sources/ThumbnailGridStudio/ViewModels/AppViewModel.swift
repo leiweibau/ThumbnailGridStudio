@@ -245,7 +245,7 @@ final class AppViewModel: ObservableObject {
         let width = Int(item.resolution.width.rounded())
         let height = Int(item.resolution.height.rounded())
         guard width > 0, height > 0 else { return AppStrings.unknownResolution }
-        return "\(width) × \(height) px"
+        return "\(width) × \(height)"
     }
 
     func formattedBitrate(for item: VideoItem) -> String {
@@ -1016,7 +1016,7 @@ final class AppViewModel: ObservableObject {
         let width = Int(resolution.width.rounded())
         let height = Int(resolution.height.rounded())
         guard width > 0, height > 0 else { return AppStrings.unknownResolution }
-        return "\(width) × \(height) px"
+        return "\(width) × \(height)"
     }
 
     private static func formatBitrate(_ bitrateBitsPerSecond: Int64) -> String {
