@@ -1,7 +1,5 @@
 # Thumbnail Grid Studio
 
-This is a vibe-coding project. I do not plan to review pull requests or handle issues for this repository.
-
 Thumbnail Grid Studio is a native macOS app built with SwiftUI that imports multiple videos and exports a video preview image for each one as `JPG` or `PNG`.
 
 ![Thumbnail Grid Studio Screenshot](./screen.png)
