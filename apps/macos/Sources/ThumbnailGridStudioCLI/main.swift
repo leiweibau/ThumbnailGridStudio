@@ -122,7 +122,7 @@ private struct ThumbnailFrame {
 }
 
 private enum CLIRunner {
-    private static let cliVersion = "1.3.3"
+    private static let cliVersion = "1.3.4"
 
     static func run() throws {
         configureHeadlessAppKit()

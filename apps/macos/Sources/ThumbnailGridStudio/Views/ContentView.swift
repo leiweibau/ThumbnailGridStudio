@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(\.colorScheme) private var colorScheme
     @ObservedObject var viewModel: AppViewModel
     @ObservedObject private var settings: AppSettings
     @State private var isDropTargeted = false
@@ -106,38 +105,28 @@ struct ContentView: View {
         }
         .toolbar {
             ToolbarItem(placement: .principal) {
-                HStack(alignment: .center, spacing: toolbarButtonSpacing) {
-                    Button {
+                HStack(spacing: 30) {
+                    toolbarButton(
+                        title: AppStrings.clearAllLabel,
+                        systemImage: "trash",
+                        tint: .red,
+                        helpText: AppStrings.clearAllHelp
+                    ) {
                         viewModel.clearAll()
-                    } label: {
-                        toolbarButtonLabel(
-                            title: AppStrings.clearAllLabel,
-                            systemImage: "trash.circle",
-                            weight: .regular
-                        )
                     }
-                    .help(AppStrings.clearAllHelp)
-                    .disabled(viewModel.videos.isEmpty || viewModel.isRendering || viewModel.isExporting)
-                    .buttonStyle(.borderless)
 
-                    Button {
+                    toolbarButton(
+                        title: AppStrings.renderLabel,
+                        systemImage: "play.fill",
+                        tint: .green,
+                        helpText: AppStrings.startHelp
+                    ) {
                         Task {
                             await viewModel.startRendering()
                         }
-                    } label: {
-                        toolbarButtonLabel(
-                            title: AppStrings.renderLabel,
-                            systemImage: "play.fill",
-                            weight: .semibold,
-                            tint: .green
-                        )
                     }
-                    .help(AppStrings.startHelp)
-                    .disabled(viewModel.videos.isEmpty || viewModel.isRendering || viewModel.isExporting)
-                    .buttonStyle(.borderless)
                 }
-                .frame(maxHeight: .infinity, alignment: .center)
-                .offset(y: toolbarVerticalOffset)
+                .fixedSize()
             }
         }
         .alert(AppStrings.errorTitle, isPresented: Binding(
@@ -167,72 +156,35 @@ struct ContentView: View {
         )
     }
 
-    private var toolbarIconSize: CGFloat {
+    private var showsToolbarText: Bool {
         switch toolbarObserver.displayMode {
         case .iconOnly:
-            return 24
-        case .iconAndLabel, .labelOnly, .default:
-            return 14
+            return false
+        case .labelOnly, .iconAndLabel, .default:
+            return true
         @unknown default:
-            return 14
+            return true
         }
     }
 
-    private var toolbarButtonSpacing: CGFloat {
-        switch toolbarObserver.displayMode {
-        case .iconOnly:
-            return 48
-        case .iconAndLabel, .labelOnly, .default:
-            return 64
-        @unknown default:
-            return 64
-        }
-    }
-
-    private var toolbarVerticalOffset: CGFloat {
-        switch toolbarObserver.displayMode {
-        case .iconOnly:
-            return 0
-        case .iconAndLabel, .labelOnly, .default:
-            return 6
-        @unknown default:
-            return 6
-        }
-    }
-
-    @ViewBuilder
-    private func toolbarButtonLabel(
+    private func toolbarButton(
         title: String,
         systemImage: String,
-        weight: Font.Weight,
-        tint: Color = .primary
+        tint: Color,
+        helpText: String,
+        action: @escaping () -> Void
     ) -> some View {
-        if toolbarObserver.displayMode == .iconOnly {
-            Image(systemName: systemImage)
-                .resizable()
-                .scaledToFit()
-                .frame(width: toolbarIconSize, height: toolbarIconSize)
-                .foregroundStyle(tint)
-        } else {
-            VStack(spacing: 3) {
+        Button(action: action) {
+            HStack(spacing: 8) {
                 Image(systemName: systemImage)
-                    .font(.system(size: toolbarIconSize, weight: weight))
                     .foregroundStyle(tint)
-                Text(title)
-                    .font(.caption2)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .foregroundStyle(toolbarTextColor)
+                if showsToolbarText {
+                    Text(title)
+                }
             }
-            .frame(height: 34, alignment: .center)
         }
-    }
-
-    private var toolbarTextColor: Color {
-        if colorScheme == .dark {
-            return Color.white.opacity(0.94)
-        }
-        return Color(nsColor: .labelColor)
+        .help(helpText)
+        .disabled(viewModel.videos.isEmpty || viewModel.isRendering || viewModel.isExporting)
     }
 }
 
